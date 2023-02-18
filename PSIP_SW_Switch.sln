@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSIP_SW_Switch", "PSIP_SW_Switch\PSIP_SW_Switch.csproj", "{6783367D-3EB6-4A57-B45C-9B9FC60DC431}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCAPTest", "PCAPTest\PCAPTest.csproj", "{95CCC1F9-D16B-4F52-B9DB-08D300C37656}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6783367D-3EB6-4A57-B45C-9B9FC60DC431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6783367D-3EB6-4A57-B45C-9B9FC60DC431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6783367D-3EB6-4A57-B45C-9B9FC60DC431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6783367D-3EB6-4A57-B45C-9B9FC60DC431}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95CCC1F9-D16B-4F52-B9DB-08D300C37656}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95CCC1F9-D16B-4F52-B9DB-08D300C37656}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95CCC1F9-D16B-4F52-B9DB-08D300C37656}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95CCC1F9-D16B-4F52-B9DB-08D300C37656}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {982F08A1-B8D5-4940-87AE-2F562D4B5383}
+	EndGlobalSection
+EndGlobal
