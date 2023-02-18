@@ -255,17 +255,18 @@
             this.dataGridViewInt1Stats.MultiSelect = false;
             this.dataGridViewInt1Stats.Name = "dataGridViewInt1Stats";
             this.dataGridViewInt1Stats.ReadOnly = true;
-            this.dataGridViewInt1Stats.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Sunken;
             this.dataGridViewInt1Stats.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             this.dataGridViewInt1Stats.RowsDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewInt1Stats.RowTemplate.Height = 29;
+            this.dataGridViewInt1Stats.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dataGridViewInt1Stats.ShowCellErrors = false;
             this.dataGridViewInt1Stats.ShowCellToolTips = false;
             this.dataGridViewInt1Stats.ShowEditingIcon = false;
             this.dataGridViewInt1Stats.ShowRowErrors = false;
             this.dataGridViewInt1Stats.Size = new System.Drawing.Size(440, 295);
             this.dataGridViewInt1Stats.TabIndex = 7;
+            this.dataGridViewInt1Stats.TabStop = false;
             // 
             // dataGridViewInt2Stats
             // 
@@ -277,16 +278,17 @@
             this.dataGridViewInt2Stats.MultiSelect = false;
             this.dataGridViewInt2Stats.Name = "dataGridViewInt2Stats";
             this.dataGridViewInt2Stats.ReadOnly = true;
-            this.dataGridViewInt2Stats.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Sunken;
             this.dataGridViewInt2Stats.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.dataGridViewInt2Stats.RowsDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewInt2Stats.RowTemplate.Height = 29;
+            this.dataGridViewInt2Stats.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dataGridViewInt2Stats.ShowCellErrors = false;
             this.dataGridViewInt2Stats.ShowCellToolTips = false;
             this.dataGridViewInt2Stats.ShowEditingIcon = false;
             this.dataGridViewInt2Stats.ShowRowErrors = false;
             this.dataGridViewInt2Stats.Size = new System.Drawing.Size(440, 295);
             this.dataGridViewInt2Stats.TabIndex = 8;
+            this.dataGridViewInt2Stats.TabStop = false;
             // 
             // groupBoxStats
             // 

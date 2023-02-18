@@ -7,6 +7,10 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using PacketDotNet;
+using System.Collections;
+using System.Reflection;
+using SharpPcap;
 
 namespace PSIP_SW_Switch
 {
@@ -69,6 +73,16 @@ namespace PSIP_SW_Switch
                 gui.dataGridViewInt2Stats.Rows[i].HeaderCell.Value = rowNames[i];
             }
 
+            foreach (DataGridViewColumn column in gui.dataGridViewInt1Stats.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
+            foreach (DataGridViewColumn column in gui.dataGridViewInt2Stats.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
         }
 
 
@@ -85,7 +99,29 @@ namespace PSIP_SW_Switch
         }
 
 
+        public static void AddStat(int intNum, SharpPcap.RawCapture capture)
+        {
+            var dataTableRef = (intNum == 1) ? int1Stats : int2Stats;
 
+
+            if (capture.LinkLayerType == LinkLayers.Ethernet)
+            {
+                int ethIndex = Array.FindIndex(rowNames, m => m == "Ethernet II");
+                if (ethIndex < 0)
+                {
+                    MessageBox.Show("Error finfing ETH II", "My Error", MessageBoxButtons.OK);
+                    return;
+                }
+                    dataTableRef.Rows[ethIndex].SetField("IN", int.Parse(dataTableRef.Rows[ethIndex]["IN"].ToString()) + 1);
+            }
+
+
+            var p = PacketDotNet.Packet.ParsePacket(capture.LinkLayerType, capture.Data);
+
+            // Add +1 To Total
+            dataTableRef.Rows[rowNames.Length-1].SetField("IN", int.Parse(dataTableRef.Rows[rowNames.Length - 1]["IN"].ToString()) + 1);
+
+        }
 
     }
 }

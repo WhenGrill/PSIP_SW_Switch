@@ -98,9 +98,10 @@ namespace PSIP_SW_Switch
 
            var cap = e.GetPacket();
            var p = PacketDotNet.Packet.ParsePacket(cap.LinkLayerType, cap.Data);
-           Console.WriteLine("[[INT {0}]] {1}", device.Description, p.ToString());
-           // TODO Statistics based oni interface
+           //Console.WriteLine("[[INT {0}]] {1}", device.Description, p.ToString());
 
+           // TODO Statistics based oni interface
+           Statistics.AddStat(1, cap);
 
         }
 
