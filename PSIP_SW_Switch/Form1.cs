@@ -45,8 +45,10 @@ namespace PSIP_SW_Switch
             comboBoxInterfaceList1.Enabled = false;
             comboBoxInterfaceList2.Enabled = false;
             buttonRefreshInterfacesLists.Enabled = false;
-        }
 
+            labelInt1Stat.Text = labelInt1Stat.Text + " - " + comboBoxInterfaceList1.SelectedItem.ToString();
+            labelInt2Stat.Text = labelInt2Stat.Text + " - " + comboBoxInterfaceList2.SelectedItem.ToString();
+        }
         private void comboBoxInterfaceList1_SelectedValueChanged(object sender, EventArgs e)
         {
             if (comboBoxInterfaceList2.SelectedItem != null && comboBoxInterfaceList2.SelectedItem != comboBoxInterfaceList1.SelectedItem)
@@ -79,6 +81,8 @@ namespace PSIP_SW_Switch
             buttonSwitchDisable.Enabled = false;
             buttonSwitchEnable.Enabled = true;
             buttonRefreshInterfacesLists.Enabled = true;
+            labelInt1Stat.Text = "Interface 1";
+            labelInt2Stat.Text = "Interface 2";
         }
 
         private void buttonInt1StatReset_Click(object sender, EventArgs e)

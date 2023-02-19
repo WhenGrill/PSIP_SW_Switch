@@ -301,7 +301,7 @@
             this.groupBoxStats.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.groupBoxStats.Location = new System.Drawing.Point(12, 325);
             this.groupBoxStats.Name = "groupBoxStats";
-            this.groupBoxStats.Size = new System.Drawing.Size(1053, 343);
+            this.groupBoxStats.Size = new System.Drawing.Size(1053, 359);
             this.groupBoxStats.TabIndex = 9;
             this.groupBoxStats.TabStop = false;
             this.groupBoxStats.Text = "Statistics";
@@ -352,7 +352,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1247, 696);
+            this.ClientSize = new System.Drawing.Size(1072, 691);
             this.Controls.Add(this.groupBoxStats);
             this.Controls.Add(this.groupBoxMACAddressTable);
             this.Controls.Add(this.groupBoxSwitchSettings);
