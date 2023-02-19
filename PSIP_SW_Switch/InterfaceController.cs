@@ -11,8 +11,13 @@ namespace PSIP_SW_Switch
     {
         static Form1 gui = Application.OpenForms.OfType<Form1>().FirstOrDefault();
 
-        private static Queue<SharpPcap.RawCapture> int1Packets;
-        private static Queue<SharpPcap.RawCapture> int2Packets;
+        private static Queue<SharpPcap.RawCapture> QueueInt1 = new Queue<RawCapture>();
+        private static Queue<SharpPcap.RawCapture> QueueInt2 = new Queue<RawCapture>();
+        private static object QueueInt1Lock = new object();
+        private static object QueueInt2Lock = new object();
+
+        private static ILiveDevice d1;
+        private static ILiveDevice d2;
 
         static SharpPcap.CaptureDeviceList devices = SharpPcap.CaptureDeviceList.Instance;
 
@@ -33,8 +38,8 @@ namespace PSIP_SW_Switch
 
         public static void InterfaceCaptureStart()
         {
-            var d1 = devices[gui.comboBoxInterfaceList1.SelectedIndex];
-            var d2 = devices[gui.comboBoxInterfaceList2.SelectedIndex];
+            d1 = devices[gui.comboBoxInterfaceList1.SelectedIndex];
+            d2 = devices[gui.comboBoxInterfaceList2.SelectedIndex];
 
             d1.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrival);
             d2.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrival);
@@ -57,58 +62,59 @@ namespace PSIP_SW_Switch
 
         public static void InterfaceCaptureStop()
         {
-            var d1 = devices[gui.comboBoxInterfaceList1.SelectedIndex];
-            var d2 = devices[gui.comboBoxInterfaceList2.SelectedIndex];
             try
             {
                 d1.StopCapture();
                 d2.StopCapture();
+                d1.Close();
+                d2.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error closing network interface device", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            finally
-            {
-                d1.Close();
-                d2.Close();
-            }
-
         }
 
-
+        #region Events
         private static void device_OnPacketArrival(object sender, PacketCapture e)
         {
-            // print out periodic statistics about this device
-           /* var Now = DateTime.Now; // cache 'DateTime.Now' for minor reduction in cpu overhead
-            var interval = Now - LastStatisticsOutput;
-            if (interval > LastStatisticsInterval)
+            ILiveDevice device = (ILiveDevice)sender;
+            var cap = e.GetPacket();
+
+            if (device == d1)
             {
-                Console.WriteLine("device_OnPacketArrival: " + e.Device.Statistics);
-                LastStatisticsOutput = Now;
+                // Add Packet to queue
+                lock (QueueInt1Lock)
+                {
+                    QueueInt1.Enqueue(cap);
+                }
+
+                // Update Statistics for Interface 1
+                Statistics.AddStat(1, cap);
+
+                //TODO Process MAC Address Table
+
+
             }
-
-            // lock QueueLock to prevent multiple threads accessing PacketQueue at
-            // the same time
-            lock (QueueLock)
+            else if (device == d2)
             {
-                PacketQueue.Add(e.GetPacket());
-            }*/
-           ILiveDevice device = (ILiveDevice)sender;
+                // Add Packet to queue
+                lock (QueueInt2Lock)
+                {
+                    QueueInt2.Enqueue(cap);
+                }
 
-           var cap = e.GetPacket();
-           var p = PacketDotNet.Packet.ParsePacket(cap.LinkLayerType, cap.Data);
-           //Console.WriteLine("[[INT {0}]] {1}", device.Description, p.ToString());
+                // Update Statistics for Interface 2
+                Statistics.AddStat(2, cap);
 
-           // TODO Statistics based oni interface
-           Statistics.AddStat(1, cap);
-
+                //TODO Process MAC Address Table
+            }
+            else
+            {
+                MessageBox.Show("Cannot capture packet: " + e.GetPacket().ToString(), "Error capturing packet", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
-
-    }
-
-    static class NetDataManipulator
-    {
+        #endregion
 
     }
 }
