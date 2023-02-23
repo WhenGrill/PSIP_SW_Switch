@@ -17,13 +17,13 @@ namespace PSIP_SW_Switch
 {
     static class Statistics
     {
-        static Form1 gui = Application.OpenForms.OfType<Form1>().FirstOrDefault();
+        static MainWindow gui = Application.OpenForms.OfType<MainWindow>().FirstOrDefault();
 
         static string[] rowNames = new string[9] { "Ethernet II", "IP", "ARP", "TCP", "UDP", "ICMP", "HTTP", "HTTPS", "Total" };
         static string[] colNames = new string[2] { "IN", "OUT" };
 
-        private static object dataTableLock1 = new object();
-        private static object dataTableLock2 = new object();
+        private static object dataTableLock1 = new();
+        private static object dataTableLock2 = new();
 
         static Dictionary<Type, int> dataTableMapping = new Dictionary<Type, int>()
             {
@@ -46,10 +46,10 @@ namespace PSIP_SW_Switch
         {
             int1Stats = new DataTable("int1Stats");
             int2Stats = new DataTable("int2Stats");
-            DataColumn i1cIN = new DataColumn("IN");
-            DataColumn i1cOUT = new DataColumn("OUT");
-            DataColumn i2cIN = new DataColumn("IN");
-            DataColumn i2cOUT = new DataColumn("OUT");
+            DataColumn i1cIN = new DataColumn("IN", typeof(uint));
+            DataColumn i1cOUT = new DataColumn("OUT", typeof(uint));
+            DataColumn i2cIN = new DataColumn("IN", typeof(uint));
+            DataColumn i2cOUT = new DataColumn("OUT", typeof(uint));
 
 
             //Add the Created Columns to the Datatable
@@ -146,7 +146,7 @@ namespace PSIP_SW_Switch
             }
         //}
 
-        //var p = PacketDotNet.Packet.ParsePacket(capture.LinkLayerType, capture.Data);
+        //var p = Packet.ParsePacket(capture.LinkLayerType, capture.Data);
         var p = capture.ethPacket;
         List<Packet> packetsPayloads = new List<Packet>();
 
@@ -166,21 +166,21 @@ namespace PSIP_SW_Switch
 
                 switch (pkt)
                 {
-                    case PacketDotNet.IPv4Packet:
-                    case PacketDotNet.IPv6Packet:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IPv4Packet)]].SetField(colName,
-                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IPv4Packet)]][colName]
+                    case IPv4Packet:
+                    case IPv6Packet:
+                        dataTableRef.Rows[dataTableMapping[typeof(IPv4Packet)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(IPv4Packet)]][colName]
                                 .ToString()) + 1);
                         break;
 
-                    case PacketDotNet.ArpPacket:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.ArpPacket)]].SetField(colName,
-                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.ArpPacket)]][colName]
+                    case ArpPacket:
+                        dataTableRef.Rows[dataTableMapping[typeof(ArpPacket)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(ArpPacket)]][colName]
                                 .ToString()) + 1);
                         break;
-                    case PacketDotNet.TcpPacket:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.TcpPacket)]].SetField(colName,
-                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.TcpPacket)]][colName]
+                    case TcpPacket:
+                        dataTableRef.Rows[dataTableMapping[typeof(TcpPacket)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(TcpPacket)]][colName]
                                 .ToString()) + 1);
 
                         var tcp = (TcpPacket)(pkt);
@@ -197,16 +197,16 @@ namespace PSIP_SW_Switch
                         }
 
                         break;
-                    case PacketDotNet.UdpPacket:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.UdpPacket)]].SetField(colName,
-                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.UdpPacket)]][colName]
+                    case UdpPacket:
+                        dataTableRef.Rows[dataTableMapping[typeof(UdpPacket)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(UdpPacket)]][colName]
                                 .ToString()) + 1);
                         break;
-                    case PacketDotNet.IcmpV4Packet:
-                    case PacketDotNet.IcmpV6Packet:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IcmpV4Packet)]].SetField(colName,
+                    case IcmpV4Packet:
+                    case IcmpV6Packet:
+                        dataTableRef.Rows[dataTableMapping[typeof(IcmpV4Packet)]].SetField(colName,
                             int.Parse(
-                                dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IcmpV4Packet)]][colName]
+                                dataTableRef.Rows[dataTableMapping[typeof(IcmpV4Packet)]][colName]
                                     .ToString()) + 1);
                         break;
 

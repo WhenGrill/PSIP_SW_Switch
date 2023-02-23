@@ -1,6 +1,6 @@
 ﻿namespace PSIP_SW_Switch
 {
-    partial class Form1
+    partial class MainWindow
     {
         /// <summary>
         ///  Required designer variable.
@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.labelIntName1 = new System.Windows.Forms.Label();
             this.groupBoxSwitchSettings = new System.Windows.Forms.GroupBox();
             this.buttonSwitchDisable = new System.Windows.Forms.Button();
@@ -334,7 +334,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
             this.Text = "PSIP - Multilayer Software Switch";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Load += new System.EventHandler(this.MainWindow_Load);
             this.groupBoxSwitchSettings.ResumeLayout(false);
             this.groupBoxNetInts.ResumeLayout(false);
             this.groupBoxNetInts.PerformLayout();
