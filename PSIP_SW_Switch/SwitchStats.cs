@@ -22,6 +22,9 @@ namespace PSIP_SW_Switch
         static string[] rowNames = new string[9] { "Ethernet II", "IP", "ARP", "TCP", "UDP", "ICMP", "HTTP", "HTTPS", "Total" };
         static string[] colNames = new string[2] { "IN", "OUT" };
 
+        private static object dataTableLock1 = new object();
+        private static object dataTableLock2 = new object();
+
         static Dictionary<Type, int> dataTableMapping = new Dictionary<Type, int>()
             {
                 {typeof(IPv4Packet), 1},
@@ -114,74 +117,112 @@ namespace PSIP_SW_Switch
         }
 
 
-        public static void AddStat(int intNum, SharpPcap.RawCapture capture)
+        public static void UpdateStatistics(int intNum, PacketForQueue capture, bool packetIN)
         {
-            var dataTableRef = (intNum == 1) ? int1Stats : int2Stats;
+        
+        
+        var dataTableRef = (intNum == 1) ? int1Stats : int2Stats;
 
-            if (capture.LinkLayerType == LinkLayers.Ethernet)
+        string colName = (packetIN) ? "IN" : "OUT";
+
+        object lck = (intNum == 1) ? dataTableLock1 : dataTableLock2;
+
+        
+
+        //if (capture.LinkLayerType == LinkLayers.Ethernet)
+        //{
+            int ethIndex = Array.FindIndex(rowNames, m => m == "Ethernet II");
+            if (ethIndex < 0)
             {
-                int ethIndex = Array.FindIndex(rowNames, m => m == "Ethernet II");
-                if (ethIndex < 0)
-                {
-                    MessageBox.Show("Error finfing ETH II", "My Error", MessageBoxButtons.OK);
-                    return;
-                }
-                dataTableRef.Rows[ethIndex].SetField("IN", int.Parse(dataTableRef.Rows[ethIndex]["IN"].ToString()) + 1);
+                MessageBox.Show("Error finding ETH II", "My Error", MessageBoxButtons.OK);
+                return;
             }
 
-            var p = PacketDotNet.Packet.ParsePacket(capture.LinkLayerType, capture.Data);
-
-            List<PacketDotNet.Packet> packetsPayloads = new List<Packet>();
-
-            var tmp = p;
-            while (tmp.PayloadPacket != null)
+            lock (lck)
             {
-                packetsPayloads.Add(tmp.PayloadPacket);
-                tmp = tmp.PayloadPacket;
+
+                dataTableRef.Rows[ethIndex].SetField(colName,
+                    int.Parse(dataTableRef.Rows[ethIndex][colName].ToString()) + 1);
             }
+        //}
+
+        //var p = PacketDotNet.Packet.ParsePacket(capture.LinkLayerType, capture.Data);
+        var p = capture.ethPacket;
+        List<Packet> packetsPayloads = new List<Packet>();
+
+        Packet tmp = p;
+        while (tmp.PayloadPacket != null) // System.IndexOutOfRangeException: 'Index was outside the bounds of the array.'
+
+        {
+            packetsPayloads.Add(tmp.PayloadPacket);
+            tmp = tmp.PayloadPacket;
+        }
 
 
-            foreach (var pkt in packetsPayloads)
+        foreach (var pkt in packetsPayloads)
+        {
+            lock (lck)
             {
+
                 switch (pkt)
                 {
                     case PacketDotNet.IPv4Packet:
                     case PacketDotNet.IPv6Packet:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IPv4Packet)]].SetField("IN", int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IPv4Packet)]]["IN"].ToString()) + 1);
+                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IPv4Packet)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IPv4Packet)]][colName]
+                                .ToString()) + 1);
                         break;
 
                     case PacketDotNet.ArpPacket:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.ArpPacket)]].SetField("IN", int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.ArpPacket)]]["IN"].ToString()) + 1);
+                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.ArpPacket)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.ArpPacket)]][colName]
+                                .ToString()) + 1);
                         break;
                     case PacketDotNet.TcpPacket:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.TcpPacket)]].SetField("IN", int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.TcpPacket)]]["IN"].ToString()) + 1);
+                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.TcpPacket)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.TcpPacket)]][colName]
+                                .ToString()) + 1);
 
                         var tcp = (TcpPacket)(pkt);
 
                         if (tcp.DestinationPort == 443)
                         {
-                            dataTableRef.Rows[7].SetField("IN", int.Parse(dataTableRef.Rows[7]["IN"].ToString()) + 1);
-                        } else if (tcp.DestinationPort == 80)
+                            dataTableRef.Rows[7].SetField(colName,
+                                int.Parse(dataTableRef.Rows[7][colName].ToString()) + 1);
+                        }
+                        else if (tcp.DestinationPort == 80)
                         {
-                            dataTableRef.Rows[6].SetField("IN", int.Parse(dataTableRef.Rows[6]["IN"].ToString()) + 1);
+                            dataTableRef.Rows[6].SetField(colName,
+                                int.Parse(dataTableRef.Rows[6][colName].ToString()) + 1);
                         }
 
                         break;
                     case PacketDotNet.UdpPacket:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.UdpPacket)]].SetField("IN", int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.UdpPacket)]]["IN"].ToString()) + 1);
+                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.UdpPacket)]].SetField(colName,
+                            int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.UdpPacket)]][colName]
+                                .ToString()) + 1);
                         break;
                     case PacketDotNet.IcmpV4Packet:
                     case PacketDotNet.IcmpV6Packet:
-                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IcmpV4Packet)]].SetField("IN", int.Parse(dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IcmpV4Packet)]]["IN"].ToString()) + 1);
+                        dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IcmpV4Packet)]].SetField(colName,
+                            int.Parse(
+                                dataTableRef.Rows[dataTableMapping[typeof(PacketDotNet.IcmpV4Packet)]][colName]
+                                    .ToString()) + 1);
                         break;
 
                 }
             }
-
-            // Add +1 To Total
-            dataTableRef.Rows[rowNames.Length-1].SetField("IN", int.Parse(dataTableRef.Rows[rowNames.Length - 1]["IN"].ToString()) + 1);
-
         }
 
+        // Add +1 To Total
+
+        //System.InvalidOperationException: 'DataTable internal index is corrupted: '5'.'
+        lock (lck)
+        {
+            dataTableRef.Rows[rowNames.Length - 1].SetField(colName,
+                int.Parse(dataTableRef.Rows[rowNames.Length - 1][colName].ToString()) + 1);
+        }
+    }
+    
     }
 }
