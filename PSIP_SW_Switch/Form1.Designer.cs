@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.labelIntName1 = new System.Windows.Forms.Label();
@@ -39,10 +40,7 @@
             this.comboBoxInterfaceList1 = new System.Windows.Forms.ComboBox();
             this.buttonRefreshInterfacesLists = new System.Windows.Forms.Button();
             this.comboBoxInterfaceList2 = new System.Windows.Forms.ComboBox();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.ColumnMACAddress = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnTimer = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnPort = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewMACAddressTable = new System.Windows.Forms.DataGridView();
             this.groupBoxMACAddressTable = new System.Windows.Forms.GroupBox();
             this.labelMACAddressTableTimerValue = new System.Windows.Forms.Label();
             this.numericUpDownMACAddressTableTimerValue = new System.Windows.Forms.NumericUpDown();
@@ -54,9 +52,10 @@
             this.buttonInt1StatReset = new System.Windows.Forms.Button();
             this.labelInt2Stat = new System.Windows.Forms.Label();
             this.labelInt1Stat = new System.Windows.Forms.Label();
+            this.timerMACAddressTable = new System.Windows.Forms.Timer(this.components);
             this.groupBoxSwitchSettings.SuspendLayout();
             this.groupBoxNetInts.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMACAddressTable)).BeginInit();
             this.groupBoxMACAddressTable.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMACAddressTableTimerValue)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewInt1Stats)).BeginInit();
@@ -82,7 +81,7 @@
             this.groupBoxSwitchSettings.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.groupBoxSwitchSettings.Location = new System.Drawing.Point(12, 12);
             this.groupBoxSwitchSettings.Name = "groupBoxSwitchSettings";
-            this.groupBoxSwitchSettings.Size = new System.Drawing.Size(478, 187);
+            this.groupBoxSwitchSettings.Size = new System.Drawing.Size(522, 187);
             this.groupBoxSwitchSettings.TabIndex = 4;
             this.groupBoxSwitchSettings.TabStop = false;
             this.groupBoxSwitchSettings.Text = "Switch Settings";
@@ -91,7 +90,7 @@
             // 
             this.buttonSwitchDisable.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.buttonSwitchDisable.ForeColor = System.Drawing.Color.Red;
-            this.buttonSwitchDisable.Location = new System.Drawing.Point(344, 114);
+            this.buttonSwitchDisable.Location = new System.Drawing.Point(389, 114);
             this.buttonSwitchDisable.Name = "buttonSwitchDisable";
             this.buttonSwitchDisable.Size = new System.Drawing.Size(127, 62);
             this.buttonSwitchDisable.TabIndex = 9;
@@ -103,7 +102,7 @@
             // 
             this.buttonSwitchEnable.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.buttonSwitchEnable.ForeColor = System.Drawing.Color.ForestGreen;
-            this.buttonSwitchEnable.Location = new System.Drawing.Point(344, 46);
+            this.buttonSwitchEnable.Location = new System.Drawing.Point(389, 46);
             this.buttonSwitchEnable.Name = "buttonSwitchEnable";
             this.buttonSwitchEnable.Size = new System.Drawing.Size(127, 62);
             this.buttonSwitchEnable.TabIndex = 8;
@@ -121,7 +120,7 @@
             this.groupBoxNetInts.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.groupBoxNetInts.Location = new System.Drawing.Point(6, 33);
             this.groupBoxNetInts.Name = "groupBoxNetInts";
-            this.groupBoxNetInts.Size = new System.Drawing.Size(332, 143);
+            this.groupBoxNetInts.Size = new System.Drawing.Size(377, 143);
             this.groupBoxNetInts.TabIndex = 6;
             this.groupBoxNetInts.TabStop = false;
             this.groupBoxNetInts.Text = "Network Interfaces";
@@ -142,7 +141,7 @@
             this.comboBoxInterfaceList1.FormattingEnabled = true;
             this.comboBoxInterfaceList1.Location = new System.Drawing.Point(53, 29);
             this.comboBoxInterfaceList1.Name = "comboBoxInterfaceList1";
-            this.comboBoxInterfaceList1.Size = new System.Drawing.Size(260, 25);
+            this.comboBoxInterfaceList1.Size = new System.Drawing.Size(318, 25);
             this.comboBoxInterfaceList1.TabIndex = 5;
             this.comboBoxInterfaceList1.SelectedValueChanged += new System.EventHandler(this.comboBoxInterfaceList1_SelectedValueChanged);
             // 
@@ -151,7 +150,7 @@
             this.buttonRefreshInterfacesLists.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.buttonRefreshInterfacesLists.Location = new System.Drawing.Point(53, 103);
             this.buttonRefreshInterfacesLists.Name = "buttonRefreshInterfacesLists";
-            this.buttonRefreshInterfacesLists.Size = new System.Drawing.Size(260, 29);
+            this.buttonRefreshInterfacesLists.Size = new System.Drawing.Size(318, 29);
             this.buttonRefreshInterfacesLists.TabIndex = 7;
             this.buttonRefreshInterfacesLists.Text = "Refresh Interfaces lists";
             this.buttonRefreshInterfacesLists.UseMnemonic = false;
@@ -164,58 +163,30 @@
             this.comboBoxInterfaceList2.FormattingEnabled = true;
             this.comboBoxInterfaceList2.Location = new System.Drawing.Point(53, 66);
             this.comboBoxInterfaceList2.Name = "comboBoxInterfaceList2";
-            this.comboBoxInterfaceList2.Size = new System.Drawing.Size(260, 25);
+            this.comboBoxInterfaceList2.Size = new System.Drawing.Size(318, 25);
             this.comboBoxInterfaceList2.TabIndex = 4;
             this.comboBoxInterfaceList2.SelectedValueChanged += new System.EventHandler(this.comboBoxInterfaceList2_SelectedValueChanged);
             // 
-            // dataGridView1
+            // dataGridViewMACAddressTable
             // 
-            this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ColumnMACAddress,
-            this.ColumnTimer,
-            this.ColumnPort});
-            this.dataGridView1.Location = new System.Drawing.Point(16, 28);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.RowTemplate.Height = 29;
-            this.dataGridView1.Size = new System.Drawing.Size(541, 234);
-            this.dataGridView1.TabIndex = 5;
-            // 
-            // ColumnMACAddress
-            // 
-            this.ColumnMACAddress.HeaderText = "MAC Address";
-            this.ColumnMACAddress.MinimumWidth = 6;
-            this.ColumnMACAddress.Name = "ColumnMACAddress";
-            this.ColumnMACAddress.ReadOnly = true;
-            this.ColumnMACAddress.Width = 127;
-            // 
-            // ColumnTimer
-            // 
-            this.ColumnTimer.HeaderText = "Timer";
-            this.ColumnTimer.MinimumWidth = 6;
-            this.ColumnTimer.Name = "ColumnTimer";
-            this.ColumnTimer.ReadOnly = true;
-            this.ColumnTimer.Width = 125;
-            // 
-            // ColumnPort
-            // 
-            this.ColumnPort.HeaderText = "Port";
-            this.ColumnPort.MinimumWidth = 6;
-            this.ColumnPort.Name = "ColumnPort";
-            this.ColumnPort.ReadOnly = true;
-            this.ColumnPort.Width = 125;
+            this.dataGridViewMACAddressTable.AllowUserToAddRows = false;
+            this.dataGridViewMACAddressTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewMACAddressTable.Location = new System.Drawing.Point(16, 28);
+            this.dataGridViewMACAddressTable.Name = "dataGridViewMACAddressTable";
+            this.dataGridViewMACAddressTable.RowHeadersWidth = 51;
+            this.dataGridViewMACAddressTable.RowTemplate.Height = 29;
+            this.dataGridViewMACAddressTable.Size = new System.Drawing.Size(494, 234);
+            this.dataGridViewMACAddressTable.TabIndex = 5;
             // 
             // groupBoxMACAddressTable
             // 
             this.groupBoxMACAddressTable.Controls.Add(this.labelMACAddressTableTimerValue);
             this.groupBoxMACAddressTable.Controls.Add(this.numericUpDownMACAddressTableTimerValue);
             this.groupBoxMACAddressTable.Controls.Add(this.buttonMACAddressTableClear);
-            this.groupBoxMACAddressTable.Controls.Add(this.dataGridView1);
-            this.groupBoxMACAddressTable.Location = new System.Drawing.Point(496, 12);
+            this.groupBoxMACAddressTable.Controls.Add(this.dataGridViewMACAddressTable);
+            this.groupBoxMACAddressTable.Location = new System.Drawing.Point(540, 12);
             this.groupBoxMACAddressTable.Name = "groupBoxMACAddressTable";
-            this.groupBoxMACAddressTable.Size = new System.Drawing.Size(569, 307);
+            this.groupBoxMACAddressTable.Size = new System.Drawing.Size(520, 307);
             this.groupBoxMACAddressTable.TabIndex = 6;
             this.groupBoxMACAddressTable.TabStop = false;
             this.groupBoxMACAddressTable.Text = "MAC Address Table";
@@ -223,7 +194,7 @@
             // labelMACAddressTableTimerValue
             // 
             this.labelMACAddressTableTimerValue.AutoSize = true;
-            this.labelMACAddressTableTimerValue.Location = new System.Drawing.Point(303, 272);
+            this.labelMACAddressTableTimerValue.Location = new System.Drawing.Point(234, 272);
             this.labelMACAddressTableTimerValue.Name = "labelMACAddressTableTimerValue";
             this.labelMACAddressTableTimerValue.Size = new System.Drawing.Size(94, 20);
             this.labelMACAddressTableTimerValue.TabIndex = 7;
@@ -231,7 +202,7 @@
             // 
             // numericUpDownMACAddressTableTimerValue
             // 
-            this.numericUpDownMACAddressTableTimerValue.Location = new System.Drawing.Point(407, 272);
+            this.numericUpDownMACAddressTableTimerValue.Location = new System.Drawing.Point(360, 270);
             this.numericUpDownMACAddressTableTimerValue.Name = "numericUpDownMACAddressTableTimerValue";
             this.numericUpDownMACAddressTableTimerValue.Size = new System.Drawing.Size(150, 27);
             this.numericUpDownMACAddressTableTimerValue.TabIndex = 7;
@@ -244,6 +215,7 @@
             this.buttonMACAddressTableClear.TabIndex = 6;
             this.buttonMACAddressTableClear.Text = "Clear";
             this.buttonMACAddressTableClear.UseVisualStyleBackColor = true;
+            this.buttonMACAddressTableClear.Click += new System.EventHandler(this.buttonMACAddressTableClear_Click);
             // 
             // dataGridViewInt1Stats
             // 
@@ -279,7 +251,6 @@
             this.dataGridViewInt2Stats.Name = "dataGridViewInt2Stats";
             this.dataGridViewInt2Stats.ReadOnly = true;
             this.dataGridViewInt2Stats.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            this.dataGridViewInt2Stats.RowsDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewInt2Stats.RowTemplate.Height = 29;
             this.dataGridViewInt2Stats.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dataGridViewInt2Stats.ShowCellErrors = false;
@@ -348,6 +319,10 @@
             this.labelInt1Stat.TabIndex = 9;
             this.labelInt1Stat.Text = "Interface 1";
             // 
+            // timerMACAddressTable
+            // 
+            this.timerMACAddressTable.Tick += new System.EventHandler(this.timerMACAddressTable_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -363,7 +338,7 @@
             this.groupBoxSwitchSettings.ResumeLayout(false);
             this.groupBoxNetInts.ResumeLayout(false);
             this.groupBoxNetInts.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMACAddressTable)).EndInit();
             this.groupBoxMACAddressTable.ResumeLayout(false);
             this.groupBoxMACAddressTable.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownMACAddressTableTimerValue)).EndInit();
@@ -384,9 +359,6 @@
         private Button buttonSwitchEnable;
         private Button buttonRefreshInterfacesLists;
         private Button buttonSwitchDisable;
-        private DataGridViewTextBoxColumn ColumnMACAddress;
-        private DataGridViewTextBoxColumn ColumnTimer;
-        private DataGridViewTextBoxColumn ColumnPort;
         private GroupBox groupBoxMACAddressTable;
         private Label labelMACAddressTableTimerValue;
         private NumericUpDown numericUpDownMACAddressTableTimerValue;
@@ -394,12 +366,13 @@
         private GroupBox groupBoxStats;
         public ComboBox comboBoxInterfaceList1;
         public ComboBox comboBoxInterfaceList2;
-        public DataGridView dataGridView1;
+        public DataGridView dataGridViewMACAddressTable;
         public DataGridView dataGridViewInt1Stats;
         public DataGridView dataGridViewInt2Stats;
         private Button buttonInt1StatReset;
         private Label labelInt2Stat;
         private Label labelInt1Stat;
         private Button buttonInt2StatReset;
+        public System.Windows.Forms.Timer timerMACAddressTable;
     }
 }

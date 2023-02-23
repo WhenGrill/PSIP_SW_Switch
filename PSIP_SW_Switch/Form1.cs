@@ -21,6 +21,7 @@ namespace PSIP_SW_Switch
         {
             InterfaceController.GUIRefreshInterfaces();
             Statistics.InitGUI();
+            InterfaceController.InitMACAddressTable();
             buttonSwitchEnable.Enabled = false;
             buttonSwitchDisable.Enabled = false;
         }
@@ -37,8 +38,9 @@ namespace PSIP_SW_Switch
             {
                 return;
             }
-
+            timerMACAddressTable.Start();
             InterfaceController.InterfaceCaptureStart();
+            
 
             buttonSwitchEnable.Enabled = false;
             buttonSwitchDisable.Enabled = true;
@@ -83,6 +85,7 @@ namespace PSIP_SW_Switch
             buttonRefreshInterfacesLists.Enabled = true;
             labelInt1Stat.Text = "Interface 1";
             labelInt2Stat.Text = "Interface 2";
+            timerMACAddressTable.Stop();
         }
 
         private void buttonInt1StatReset_Click(object sender, EventArgs e)
@@ -93,6 +96,16 @@ namespace PSIP_SW_Switch
         private void buttonInt2StatReset_Click(object sender, EventArgs e)
         {
             Statistics.ResetStatsInt(2);
+        }
+
+        private void timerMACAddressTable_Tick(object sender, EventArgs e)
+        {
+            //dataGridViewMACAddressTable.Refresh();
+        }
+
+        private void buttonMACAddressTableClear_Click(object sender, EventArgs e)
+        {
+            InterfaceController.ClearMACAddressTable();
         }
     }
 }
