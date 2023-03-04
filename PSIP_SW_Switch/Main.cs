@@ -14,8 +14,8 @@ namespace PSIP_SW_Switch
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            MainWindow form1 = new MainWindow();
-            Application.Run(form1);
+            MainWindow mainWindow = new MainWindow();
+            Application.Run(mainWindow);
         }
     }
 }

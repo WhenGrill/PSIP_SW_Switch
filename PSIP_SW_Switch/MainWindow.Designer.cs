@@ -33,6 +33,20 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.labelIntName1 = new System.Windows.Forms.Label();
             this.groupBoxSwitchSettings = new System.Windows.Forms.GroupBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.radioButton2 = new System.Windows.Forms.RadioButton();
+            this.radioButton1 = new System.Windows.Forms.RadioButton();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.buttonSetSysLogIPs = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.buttonSwitchDisable = new System.Windows.Forms.Button();
             this.buttonSwitchEnable = new System.Windows.Forms.Button();
             this.groupBoxNetInts = new System.Windows.Forms.GroupBox();
@@ -48,12 +62,16 @@
             this.dataGridViewInt1Stats = new System.Windows.Forms.DataGridView();
             this.dataGridViewInt2Stats = new System.Windows.Forms.DataGridView();
             this.groupBoxStats = new System.Windows.Forms.GroupBox();
+            this.buttonStatResetAll = new System.Windows.Forms.Button();
             this.buttonInt2StatReset = new System.Windows.Forms.Button();
             this.buttonInt1StatReset = new System.Windows.Forms.Button();
             this.labelInt2Stat = new System.Windows.Forms.Label();
             this.labelInt1Stat = new System.Windows.Forms.Label();
             this.timerMACAddressTable = new System.Windows.Forms.Timer(this.components);
+            this.dataGridViewACL = new System.Windows.Forms.DataGridView();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBoxSwitchSettings.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.groupBoxNetInts.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMACAddressTable)).BeginInit();
             this.groupBoxMACAddressTable.SuspendLayout();
@@ -61,6 +79,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewInt1Stats)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewInt2Stats)).BeginInit();
             this.groupBoxStats.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewACL)).BeginInit();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // labelIntName1
@@ -75,16 +95,172 @@
             // 
             // groupBoxSwitchSettings
             // 
+            this.groupBoxSwitchSettings.Controls.Add(this.groupBox1);
             this.groupBoxSwitchSettings.Controls.Add(this.buttonSwitchDisable);
             this.groupBoxSwitchSettings.Controls.Add(this.buttonSwitchEnable);
             this.groupBoxSwitchSettings.Controls.Add(this.groupBoxNetInts);
             this.groupBoxSwitchSettings.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.groupBoxSwitchSettings.Location = new System.Drawing.Point(12, 12);
             this.groupBoxSwitchSettings.Name = "groupBoxSwitchSettings";
-            this.groupBoxSwitchSettings.Size = new System.Drawing.Size(522, 187);
+            this.groupBoxSwitchSettings.Size = new System.Drawing.Size(957, 307);
             this.groupBoxSwitchSettings.TabIndex = 4;
             this.groupBoxSwitchSettings.TabStop = false;
             this.groupBoxSwitchSettings.Text = "Switch Settings";
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.label5);
+            this.groupBox1.Controls.Add(this.radioButton2);
+            this.groupBox1.Controls.Add(this.radioButton1);
+            this.groupBox1.Controls.Add(this.checkBox1);
+            this.groupBox1.Controls.Add(this.buttonSetSysLogIPs);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.textBox4);
+            this.groupBox1.Controls.Add(this.textBox3);
+            this.groupBox1.Controls.Add(this.label2);
+            this.groupBox1.Controls.Add(this.label1);
+            this.groupBox1.Controls.Add(this.textBox2);
+            this.groupBox1.Controls.Add(this.textBox1);
+            this.groupBox1.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.groupBox1.Location = new System.Drawing.Point(522, 33);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(422, 143);
+            this.groupBox1.TabIndex = 10;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "SysLog";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label5.Location = new System.Drawing.Point(336, 26);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(57, 20);
+            this.label5.TabIndex = 14;
+            this.label5.Text = "Out Int.";
+            // 
+            // radioButton2
+            // 
+            this.radioButton2.AutoSize = true;
+            this.radioButton2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.radioButton2.Location = new System.Drawing.Point(331, 71);
+            this.radioButton2.Name = "radioButton2";
+            this.radioButton2.Size = new System.Drawing.Size(62, 24);
+            this.radioButton2.TabIndex = 14;
+            this.radioButton2.Text = "Int. 2";
+            this.radioButton2.UseVisualStyleBackColor = true;
+            // 
+            // radioButton1
+            // 
+            this.radioButton1.AutoSize = true;
+            this.radioButton1.Checked = true;
+            this.radioButton1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.radioButton1.Location = new System.Drawing.Point(331, 49);
+            this.radioButton1.Name = "radioButton1";
+            this.radioButton1.Size = new System.Drawing.Size(62, 24);
+            this.radioButton1.TabIndex = 15;
+            this.radioButton1.TabStop = true;
+            this.radioButton1.Text = "Int. 1";
+            this.radioButton1.UseVisualStyleBackColor = true;
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Location = new System.Drawing.Point(18, 99);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(141, 27);
+            this.checkBox1.TabIndex = 8;
+            this.checkBox1.Text = "Enable SysLog";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            // 
+            // buttonSetSysLogIPs
+            // 
+            this.buttonSetSysLogIPs.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.buttonSetSysLogIPs.Location = new System.Drawing.Point(336, 101);
+            this.buttonSetSysLogIPs.Name = "buttonSetSysLogIPs";
+            this.buttonSetSysLogIPs.Size = new System.Drawing.Size(50, 29);
+            this.buttonSetSysLogIPs.TabIndex = 14;
+            this.buttonSetSysLogIPs.Text = "Set";
+            this.buttonSetSysLogIPs.UseVisualStyleBackColor = true;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(210, 27);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(14, 23);
+            this.label4.TabIndex = 7;
+            this.label4.Text = ":";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(210, 60);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(14, 23);
+            this.label3.TabIndex = 6;
+            this.label3.Text = ":";
+            // 
+            // textBox4
+            // 
+            this.textBox4.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.textBox4.Location = new System.Drawing.Point(230, 26);
+            this.textBox4.Name = "textBox4";
+            this.textBox4.PlaceholderText = "Port";
+            this.textBox4.Size = new System.Drawing.Size(61, 27);
+            this.textBox4.TabIndex = 5;
+            this.textBox4.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // textBox3
+            // 
+            this.textBox3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.textBox3.Location = new System.Drawing.Point(230, 59);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.PlaceholderText = "Port";
+            this.textBox3.Size = new System.Drawing.Size(61, 27);
+            this.textBox3.TabIndex = 4;
+            this.textBox3.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label2.Location = new System.Drawing.Point(18, 63);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(47, 20);
+            this.label2.TabIndex = 3;
+            this.label2.Text = "Client";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label1.Location = new System.Drawing.Point(15, 33);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(50, 20);
+            this.label1.TabIndex = 2;
+            this.label1.Text = "Server";
+            // 
+            // textBox2
+            // 
+            this.textBox2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.textBox2.Location = new System.Drawing.Point(71, 59);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.PlaceholderText = "IP Address";
+            this.textBox2.Size = new System.Drawing.Size(133, 27);
+            this.textBox2.TabIndex = 1;
+            this.textBox2.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.textBox1.Location = new System.Drawing.Point(71, 26);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.PlaceholderText = "IP Address";
+            this.textBox1.Size = new System.Drawing.Size(133, 27);
+            this.textBox1.TabIndex = 0;
+            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // buttonSwitchDisable
             // 
@@ -184,7 +360,7 @@
             this.groupBoxMACAddressTable.Controls.Add(this.numericUpDownMACAddressTableTimerValue);
             this.groupBoxMACAddressTable.Controls.Add(this.buttonMACAddressTableClear);
             this.groupBoxMACAddressTable.Controls.Add(this.dataGridViewMACAddressTable);
-            this.groupBoxMACAddressTable.Location = new System.Drawing.Point(540, 12);
+            this.groupBoxMACAddressTable.Location = new System.Drawing.Point(1023, 12);
             this.groupBoxMACAddressTable.Name = "groupBoxMACAddressTable";
             this.groupBoxMACAddressTable.Size = new System.Drawing.Size(520, 307);
             this.groupBoxMACAddressTable.TabIndex = 6;
@@ -263,6 +439,7 @@
             // 
             // groupBoxStats
             // 
+            this.groupBoxStats.Controls.Add(this.buttonStatResetAll);
             this.groupBoxStats.Controls.Add(this.buttonInt2StatReset);
             this.groupBoxStats.Controls.Add(this.buttonInt1StatReset);
             this.groupBoxStats.Controls.Add(this.labelInt2Stat);
@@ -276,6 +453,17 @@
             this.groupBoxStats.TabIndex = 9;
             this.groupBoxStats.TabStop = false;
             this.groupBoxStats.Text = "Statistics";
+            // 
+            // buttonStatResetAll
+            // 
+            this.buttonStatResetAll.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.buttonStatResetAll.Location = new System.Drawing.Point(463, 126);
+            this.buttonStatResetAll.Name = "buttonStatResetAll";
+            this.buttonStatResetAll.Size = new System.Drawing.Size(132, 29);
+            this.buttonStatResetAll.TabIndex = 13;
+            this.buttonStatResetAll.Text = "Reset All";
+            this.buttonStatResetAll.UseVisualStyleBackColor = true;
+            this.buttonStatResetAll.Click += new System.EventHandler(this.buttonStatResetAll_Click);
             // 
             // buttonInt2StatReset
             // 
@@ -302,20 +490,20 @@
             // labelInt2Stat
             // 
             this.labelInt2Stat.AutoSize = true;
-            this.labelInt2Stat.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelInt2Stat.Location = new System.Drawing.Point(601, 25);
+            this.labelInt2Stat.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.labelInt2Stat.Location = new System.Drawing.Point(601, 26);
             this.labelInt2Stat.Name = "labelInt2Stat";
-            this.labelInt2Stat.Size = new System.Drawing.Size(79, 20);
+            this.labelInt2Stat.Size = new System.Drawing.Size(74, 19);
             this.labelInt2Stat.TabIndex = 10;
             this.labelInt2Stat.Text = "Interface 2";
             // 
             // labelInt1Stat
             // 
             this.labelInt1Stat.AutoSize = true;
-            this.labelInt1Stat.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.labelInt1Stat.Location = new System.Drawing.Point(12, 25);
+            this.labelInt1Stat.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.labelInt1Stat.Location = new System.Drawing.Point(12, 26);
             this.labelInt1Stat.Name = "labelInt1Stat";
-            this.labelInt1Stat.Size = new System.Drawing.Size(79, 20);
+            this.labelInt1Stat.Size = new System.Drawing.Size(74, 19);
             this.labelInt1Stat.TabIndex = 9;
             this.labelInt1Stat.Text = "Interface 1";
             // 
@@ -323,19 +511,43 @@
             // 
             this.timerMACAddressTable.Tick += new System.EventHandler(this.timerMACAddressTable_Tick);
             // 
-            // Form1
+            // dataGridViewACL
+            // 
+            this.dataGridViewACL.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewACL.Location = new System.Drawing.Point(6, 26);
+            this.dataGridViewACL.Name = "dataGridViewACL";
+            this.dataGridViewACL.RowHeadersWidth = 51;
+            this.dataGridViewACL.RowTemplate.Height = 29;
+            this.dataGridViewACL.Size = new System.Drawing.Size(1515, 258);
+            this.dataGridViewACL.TabIndex = 10;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.dataGridViewACL);
+            this.groupBox2.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.groupBox2.Location = new System.Drawing.Point(12, 690);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(1531, 290);
+            this.groupBox2.TabIndex = 11;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "ACL";
+            // 
+            // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1072, 691);
+            this.ClientSize = new System.Drawing.Size(1555, 992);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBoxStats);
             this.Controls.Add(this.groupBoxMACAddressTable);
             this.Controls.Add(this.groupBoxSwitchSettings);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "Form1";
+            this.Name = "MainWindow";
             this.Text = "PSIP - Multilayer Software Switch";
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.groupBoxSwitchSettings.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.groupBoxNetInts.ResumeLayout(false);
             this.groupBoxNetInts.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMACAddressTable)).EndInit();
@@ -346,6 +558,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewInt2Stats)).EndInit();
             this.groupBoxStats.ResumeLayout(false);
             this.groupBoxStats.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewACL)).EndInit();
+            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -374,5 +588,22 @@
         private Label labelInt1Stat;
         private Button buttonInt2StatReset;
         public System.Windows.Forms.Timer timerMACAddressTable;
+        private Button buttonStatResetAll;
+        private GroupBox groupBox1;
+        private Label label4;
+        private Label label3;
+        private TextBox textBox4;
+        private TextBox textBox3;
+        private Label label2;
+        private Label label1;
+        private TextBox textBox2;
+        private TextBox textBox1;
+        private CheckBox checkBox1;
+        private Button buttonSetSysLogIPs;
+        private Label label5;
+        private RadioButton radioButton2;
+        private RadioButton radioButton1;
+        private GroupBox groupBox2;
+        public DataGridView dataGridViewACL;
     }
 }

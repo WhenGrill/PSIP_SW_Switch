@@ -1,6 +1,3 @@
-using System.Data;
-using System.Net;
-
 namespace PSIP_SW_Switch
 {
     public partial class MainWindow : Form
@@ -14,6 +11,7 @@ namespace PSIP_SW_Switch
         {
             InterfaceController.InitInterfaceController();
             Statistics.InitGUI();
+            ACL.InitACL();
             buttonSwitchEnable.Enabled = false;
             buttonSwitchDisable.Enabled = false;
         }
@@ -97,7 +95,13 @@ namespace PSIP_SW_Switch
 
         private void buttonMACAddressTableClear_Click(object sender, EventArgs e)
         {
-            InterfaceController.ClearMACAddressTable();
+           MACAddressTable.ClearMACAddressTable();
+        }
+
+        private void buttonStatResetAll_Click(object sender, EventArgs e)
+        {
+            Statistics.ResetStatsInt(1);
+            Statistics.ResetStatsInt(2);
         }
     }
 }

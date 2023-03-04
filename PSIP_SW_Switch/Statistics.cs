@@ -34,9 +34,6 @@ namespace PSIP_SW_Switch
                 {typeof(UdpPacket), 4},
                 {typeof(IcmpV4Packet), 5},
                 {typeof(IcmpV6Packet), 5},
-//{typeof(TcpPacket), 6},
- //           {typeof(TcpPacket), 7},
-
             };
 
         public static DataTable int1Stats;

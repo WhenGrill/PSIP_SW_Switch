@@ -1,58 +1,49 @@
 ﻿using SharpPcap;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net.NetworkInformation;
 using PacketDotNet;
-using System.Net.Mail;
+using System.Net.NetworkInformation;
 
 namespace PSIP_SW_Switch
 {
     static class InterfaceController
     {
-        private static MainWindow? _gui;
+        public static MainWindow? gui;
 
         private static Queue<PacketForQueue>? _capturedQueue;
         private static object? _capturedQueueLock;
 
-        private static ILiveDevice? _d1;
-        private static ILiveDevice? _d2;
+        public static ILiveDevice? d1;
+        public static ILiveDevice? d2;
 
         static CaptureDeviceList _devices = CaptureDeviceList.Instance;
+        private static List<ILiveDevice>? _openedDevices;
 
-        private static DataTable? _macAddressDataTable;
-        private static List<DataRow>? _macAddressRows;
-        private static List<EndDeviceInfo>? _macAddressTable;
 
-        private static Dictionary<ILiveDevice, uint>? _deviceMap;
+
+        public static Dictionary<ILiveDevice, int>? deviceMap;
 
         private static bool _networkInterfaceSenderThreadStop;
         private static Thread? _networkInterfaceSenderThread;
 
-        private static object? _macAddressDataTableLock;
-        private static object? _macAddressRowsLock;
-        private static object? _macAddressTableLock;
-
 
         public static void InitInterfaceController()
         {
-            _gui = Application.OpenForms.OfType<MainWindow>().FirstOrDefault();
-            if (_gui == null)
+            gui = Application.OpenForms.OfType<MainWindow>().FirstOrDefault();
+            if (gui == null)
             {
                 MessageBox.Show("Cannot get GUI Instance", "GUI Instance Error", MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 Application.Exit();
             }
             GUIRefreshInterfaces();
-            InitMACAddressTable();
+            MACAddressTable.InitMACAddressTable();
         }
 
         public static void GUIRefreshInterfaces()
         {
-            _gui?.comboBoxInterfaceList1.Items.Clear();
-            _gui?.comboBoxInterfaceList2.Items.Clear();
+            gui?.comboBoxInterfaceList1.Items.Clear();
+            gui?.comboBoxInterfaceList2.Items.Clear();
             // TODO clear combobox text after refresh interface
             // TODO sort them !
 
@@ -60,8 +51,8 @@ namespace PSIP_SW_Switch
 
             foreach (var dev in _devices)
             {
-                _gui?.comboBoxInterfaceList1.Items.Add(dev.Description);
-                _gui?.comboBoxInterfaceList2.Items.Add(dev.Description);
+                gui?.comboBoxInterfaceList1.Items.Add(dev.Description);
+                gui?.comboBoxInterfaceList2.Items.Add(dev.Description);
             }
         }
 
@@ -87,19 +78,20 @@ namespace PSIP_SW_Switch
 
         public static void InterfaceCaptureStart()
         {
-            _d1 = _devices[_gui.comboBoxInterfaceList1.SelectedIndex];
-            _d2 = _devices[_gui.comboBoxInterfaceList2.SelectedIndex];
+            d1 = _devices[gui.comboBoxInterfaceList1.SelectedIndex];
+            d2 = _devices[gui.comboBoxInterfaceList2.SelectedIndex];
 
-            _deviceMap = new();
+            deviceMap = new();
 
-            _deviceMap[_d1] = 1;
-            _deviceMap[_d2] = 2;
+            deviceMap[d1] = 1;
+            deviceMap[d2] = 2;
 
             try
             {
+                OpenNetworkInterfaces();
                 InitNetworkInterfaceSenderThread();
-                StartNetworkInterfaceCapture(_d1);
-                StartNetworkInterfaceCapture(_d2);
+                StartNetworkInterfaceCapture(d1);
+                StartNetworkInterfaceCapture(d2);
             }
             catch (Exception ex)
             {
@@ -113,140 +105,118 @@ namespace PSIP_SW_Switch
             {
                 _networkInterfaceSenderThreadStop = true;
                 _networkInterfaceSenderThread.Join();
-                _d1.StopCapture();
-                _d2.StopCapture();
+                d1.StopCapture();
+                d2.StopCapture();
+
+                CloseNetworkInterfaces();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error closing network interface device", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         #region Events
         private static void device_OnPacketArrival(object sender, PacketCapture e)
         {
+            PacketForQueue p;
             try
             {
                 ILiveDevice device = (ILiveDevice)sender;
                 RawCapture cap = e.GetPacket();
-                PacketForQueue p;
+
+                if (ACL.Enabled  && !ACL.IsAllowed(cap, device)) // ACL Enabled and if not Allowed
+                {
+                    return;
+                }
+
+
                 lock (_capturedQueueLock)
                 {
                     p = new PacketForQueue(device, cap);
                     _capturedQueue.Enqueue(p);
                 }
-                Statistics.UpdateStatistics((device == _d1) ? 1 : 2, p, true);
-                UpdateMACAddressTable(cap, device);
+                Statistics.UpdateStatistics((device == d1) ? 1 : 2, p, true);
+                MACAddressTable.UpdateMACAddressTable(p);
             }
 
             catch (Exception ex)
             {
-                MessageBox.Show("Cannot capture packet: " + ex.Message, "Error capturing packet", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                MessageBox.Show("Cannot capture packet: " + ex.Message + "\n\n" + "Object:\n\n" + ex.Data + "\n\nSTACK TRACE:\n\n" + ex.StackTrace, "Error capturing packet", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         #endregion
 
+        private static void OpenNetworkInterfaces()
+        {
+            _openedDevices = new(_devices);
+
+            foreach (var dev in _devices)
+            {
+                try
+                {
+                    dev.Open(DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
+                }
+                catch
+                {
+                    _openedDevices.Remove(dev);
+                }
+            }
+        }
+
+        private static void CloseNetworkInterfaces()
+        {
+            List<ILiveDevice> notCloseDevices = new();
+            foreach (var dev in _openedDevices)
+            {
+                try
+                {
+                    dev.Close();
+                }
+                catch
+                {
+                    notCloseDevices.Add(dev);
+                }
+            }
+
+            if (notCloseDevices.Count != 0)
+            {
+                string interfaces = "";
+                foreach (var dev in notCloseDevices)
+                {
+                    interfaces += "\t - " + dev.Description + "\n";
+                }
+
+                MessageBox.Show("Some interfaces failed to close:" + interfaces, "Failed to close interface",
+                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
+
         private static void StartNetworkInterfaceCapture(ILiveDevice device)
         {
-            device.Open( DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
+            //device.Open( DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
             device.OnPacketArrival += device_OnPacketArrival;
             device.StartCapture();
         }
 
 
-        #region MACAddressTable
-
-        public static void ClearMACAddressTable()
-        {
-            InitMACAddressTable();
-        }
-        private static void UpdateMACAddressTable(RawCapture cap, ILiveDevice device)
-        {
-            if (cap.LinkLayerType != LinkLayers.Ethernet) // TODO co s tymto
-                return;
-
-            var eth = (EthernetPacket)cap.GetPacket();
-
-
-            var srcMac = eth.SourceHardwareAddress.ToString();
-
-            if (_d1.MacAddress.Equals(eth.SourceHardwareAddress) || _d2.MacAddress.Equals(eth.SourceHardwareAddress))
-            {
-                return;
-            }
-
-            if(isInTable(srcMac, _deviceMap[device]))
-                return;
-
-            var dev = new EndDeviceInfo(srcMac, _deviceMap[device], 1800);
-            lock (_macAddressTableLock)
-            {
-                _macAddressTable.Add(dev);
-            }
-
-            UpdateGUIMACAddressTable(dev);
-        }
-
-        private static void UpdateGUIMACAddressTable(EndDeviceInfo dev)
-        {
-            DataRow row = _macAddressDataTable.NewRow();
-
-            row["MAC Address"] = EndDeviceInfo.FormatMAC(dev.MacAddress);
-            row["Port"] = dev.Port;
-            row["Timer"] = dev.Timer;
-
-            lock (_macAddressDataTableLock)
-            {
-                _macAddressDataTable.Rows.Add(row);
-            }
-
-            if (_gui.dataGridViewMACAddressTable.InvokeRequired)
-            {
-                _gui.dataGridViewMACAddressTable.Invoke(new Action(() => { _gui.dataGridViewMACAddressTable.Refresh(); })); // TODO System.NullReferenceException: 'Object reference not set to an instance of an object.'
-
-            }
-        }
-
-        public static void InitMACAddressTable()
-        {
-            _macAddressDataTable = new DataTable("macAddressTable");
-            _macAddressRows = new List<DataRow>();
-            _macAddressTable = new List<EndDeviceInfo>();
-            
-            DataColumn columnMAC = new DataColumn("MAC Address");
-            DataColumn columnPort = new DataColumn("Port");
-            DataColumn columnTimer = new DataColumn("Timer");
-
-
-            //Add the Created Columns to the Datatable
-
-            _macAddressDataTable.Columns.Add(columnMAC);
-            _macAddressDataTable.Columns.Add(columnPort);
-            _macAddressDataTable.Columns.Add(columnTimer);
-
-            _gui.dataGridViewMACAddressTable.DataSource = _macAddressDataTable;
-        }
-
-        public static bool isInTable(string mac, uint port)
-        {
-            foreach (var record in _macAddressTable)
-            {
-                if (record.MacAddress == mac && record.Port == port)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        #endregion
+        
 
 
         #region PacketProcessing
+
+        private static void RemoveNonFunctioningDevices(List<ILiveDevice> nonFunctioningDevices)
+        {
+            foreach (var dev in nonFunctioningDevices)
+            {
+                dev.Close();
+                nonFunctioningDevices.Remove(dev);
+            }
+        }
         
         private static void Thread_NetworkInterfaceSender(ref Queue<PacketForQueue> PacketQueue, ref object QueueLock, ref bool BackgroundThreadStop)
         {
+            Console.WriteLine("Started");
             while (!BackgroundThreadStop)
             {
                 Queue<PacketForQueue> processQueue = null;
@@ -266,13 +236,44 @@ namespace PSIP_SW_Switch
                     {
                         try
                         {
-                            ILiveDevice senderDevice = (qPacket.device == _d1) ? _d2 : ((qPacket.device == _d2) ? _d1 : null);
+                            if (ACL.Enabled && !ACL.IsAllowed(qPacket))
+                            {
+                                continue;
+                            }
+
+
+                            ILiveDevice senderDevice = (qPacket.device == d1) ? d2 : ((qPacket.device == d2) ? d1 : null);
                             if (senderDevice == null)
                             {
                                 throw new Exception("Invalid device");
                             }
-                            senderDevice.SendPacket(qPacket.ethPacket);
-                            Statistics.UpdateStatistics( (senderDevice == _d1) ? 1 : 2 , qPacket, false);
+
+                            if (MACAddressTable.isInTable(qPacket))
+                            {
+                                senderDevice.SendPacket(qPacket.ethPacket);
+                            }
+                            else
+                            {
+                                foreach (var dev in _openedDevices.ToList())
+                                {
+                                    if (qPacket.device == dev)
+                                        continue;
+
+                                    try
+                                    {
+                                        dev.SendPacket(qPacket.ethPacket);
+                                    }
+                                    catch
+                                    {
+                                        dev.Close();
+                                        _openedDevices.Remove(dev);
+                                    }
+                                }
+                               
+                            }
+
+                            Statistics.UpdateStatistics( (senderDevice == d1) ? 1 : 2 , qPacket, false);
+
                         }
                         catch (Exception ex)
                         {
@@ -282,7 +283,7 @@ namespace PSIP_SW_Switch
                 }
                 if (!BackgroundThreadStop)
                 {
-                    System.Threading.Thread.Sleep(10);
+                    Thread.Sleep(10);
                 }
             }
         }
@@ -301,23 +302,48 @@ namespace PSIP_SW_Switch
             this.ethPacket = (EthernetPacket)Packet.ParsePacket(capture.LinkLayerType, capture.Data);
         }
 
+        public PacketForQueue(ILiveDevice device, SysLogPacket packet)
+        {
+            this.device = device;
+            this.ethPacket = (EthernetPacket)packet.GetPacket(); // TODO check if Syslog wont make problems here
+        }
+
     }
+
     public class EndDeviceInfo
     {
-        public string MacAddress { get; set; }
-        public uint Port { get; set; }
-        public uint Timer { get; set; }
+        public PhysicalAddress MacAddress { get; set; }
+        public int Port { get; set; }
+        public int Timer { get; set; }
 
-        public EndDeviceInfo(string macAddress, uint port, uint timer)
+        public EndDeviceInfo(PacketForQueue packet, int port,  int timer)
         {
-            MacAddress = macAddress;
+            MacAddress = packet.ethPacket.SourceHardwareAddress;
             Port = port;
             Timer = timer;
         }
 
-        public static string FormatMAC(string mac)
+        public static string FormatMAC<T>(T mac)
         {
-            string macAddress = mac.ToUpper();
+            string macAddress;
+
+            if (mac is PhysicalAddress m)
+            {
+                macAddress = m.ToString();
+            } else if (mac is string s)
+            {
+                if (s.Length != 12)
+                {
+                    throw new InvalidDataException("Invalid type of MAC Address");
+                }
+                macAddress = s;
+            }
+            else
+            {
+                throw new InvalidDataException("Invalid type of MAC Address");
+            }
+
+            macAddress = macAddress.ToUpper();
             string formattedMacAddress = "";
             for (int i = 0; i < macAddress.Length; i += 2)
             {
