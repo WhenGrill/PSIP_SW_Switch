@@ -10,8 +10,8 @@ namespace PSIP_SW_Switch
     {
         public static MainWindow? gui;
 
-        private static Queue<PacketForQueue>? _capturedQueue;
-        private static object? _capturedQueueLock;
+        public static Queue<PacketForQueue>? CapturedQueue;
+        public static object? CapturedQueueLock;
 
         public static ILiveDevice? d1;
         public static ILiveDevice? d2;
@@ -59,11 +59,11 @@ namespace PSIP_SW_Switch
         private static void InitNetworkInterfaceSenderThread()
         {
             _networkInterfaceSenderThreadStop = false;
-            _capturedQueueLock = new();
-            _capturedQueue = new Queue<PacketForQueue>();
+            CapturedQueueLock = new();
+            CapturedQueue = new Queue<PacketForQueue>();
 
             _networkInterfaceSenderThread = new Thread(
-                    () => Thread_NetworkInterfaceSender(ref _capturedQueue, ref _capturedQueueLock, ref _networkInterfaceSenderThreadStop))
+                    () => Thread_NetworkInterfaceSender(ref CapturedQueue, ref CapturedQueueLock, ref _networkInterfaceSenderThreadStop))
                 { Name = "Packet Sender Thread" };
             try
             {
@@ -131,13 +131,13 @@ namespace PSIP_SW_Switch
                 }
 
 
-                lock (_capturedQueueLock)
+                lock (CapturedQueueLock)
                 {
                     p = new PacketForQueue(device, cap);
-                    _capturedQueue.Enqueue(p);
+                    CapturedQueue.Enqueue(p);
                 }
                 Statistics.UpdateStatistics((device == d1) ? 1 : 2, p, true);
-                MACAddressTable.UpdateMACAddressTable(p);
+                //MACAddressTable.UpdateMACAddressTable(p); // TODO Collection modified
             }
 
             catch (Exception ex)

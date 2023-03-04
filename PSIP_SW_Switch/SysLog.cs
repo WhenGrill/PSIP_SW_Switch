@@ -77,21 +77,24 @@ namespace PSIP_SW_Switch
 
         public static void Log(SysLogSeverity Severity, string Message)
         {
-            if(!Enabled)
-                return;
+            // TODO check if threading like this is fine
+            Task.Run(() =>
+                {
+                    if (!Enabled)
+                        return;
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(Message);
-            Console.ResetColor();
-            // TODO Add Packet to Queue
-            DateTime timestamp = DateTime.Now;
-            string msg = "[" + timestamp.ToString("yyyy/MM/dd HH:mm:ss") + "] " + Message;
-            SysLogPacket sysLogPacket = new SysLogPacket(Severity, msg);
+                    DateTime timestamp = DateTime.Now;
+                    string msg = "[" + timestamp.ToString("yyyy/MM/dd HH:mm:ss") + "] " + Message;
 
-            PacketForQueue pkQ = new PacketForQueue(sender, sysLogPacket);
+                    PacketForQueue pkQ = new PacketForQueue(sender, new SysLogPacket(Severity, msg));
 
-            sender.SendPacket(pkQ.ethPacket);
-
+                    lock (InterfaceController.CapturedQueueLock)
+                    {
+                        InterfaceController.CapturedQueue.Enqueue(pkQ);
+                    }
+                }
+                );
+            
         }
 
     }
