@@ -85,7 +85,7 @@ namespace PSIP_SW_Switch
             Console.ResetColor();
             // TODO Add Packet to Queue
             DateTime timestamp = DateTime.Now;
-            string msg = "[" + timestamp.ToString("yyyy/MM/dd HH:mm:ss") + "]" + Message;
+            string msg = "[" + timestamp.ToString("yyyy/MM/dd HH:mm:ss") + "] " + Message;
             SysLogPacket sysLogPacket = new SysLogPacket(Severity, msg);
 
             PacketForQueue pkQ = new PacketForQueue(sender, sysLogPacket);
@@ -128,7 +128,7 @@ namespace PSIP_SW_Switch
             var ethernetPacket = new EthernetPacket(
                 SysLog.sender.MacAddress,
                 SysLog.ServerPhysicalAddress,
-                                        EthernetType.IPv4) // TODO is it eth type ipv4??
+                                        EthernetType.IPv4)
             {
                 PayloadPacket = ipPacket,
             };
