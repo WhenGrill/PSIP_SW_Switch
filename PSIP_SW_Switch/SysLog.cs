@@ -6,21 +6,58 @@ using SharpPcap;
 
 namespace PSIP_SW_Switch
 {
-    public enum SysLogSeverity {INFO = 6, NOTICE = 5, WARNING = 4, ALERT = 1, ERROR = 3}
+    public enum SysLogFacility : int
+    {
+        Kernel = 0,
+        User = 1,
+        Mail = 2,
+        System = 3,
+        Security = 4,
+        Syslogd = 5,
+        Printer = 6,
+        News = 7,
+        Uucp = 8,
+        Clock = 9,
+        Security2 = 10,
+        Ftp = 11,
+        Ntp = 12,
+        Audit = 13,
+        Alert = 14,
+        Clock2 = 15,
+        Local0 = 16,
+        Local1 = 17,
+        Local2 = 18,
+        Local3 = 19,
+        Local4 = 20,
+        Local5 = 21,
+        Local6 = 22,
+        Local7 = 23,
+    }
+
+    public enum SysLogSeverity : int
+    {
+        Emergency = 0,
+        Alert = 1,
+        Critical = 2,
+        Error = 3,
+        Warning = 4,
+        Notice = 5,
+        Informational = 6,
+        Debug = 7,
+    }
 
 
 
 
     static class SysLog
     {
-        public static bool Enabled = false;
+        public static bool Enabled = true;
 
-        public static IPAddress ServerIpAddress = IPAddress.Parse("127.0.0.1");
-        public static IPAddress ClientIpAddress = IPAddress.Parse("127.0.0.1");
-        public static PhysicalAddress ClientPhysicalAddress = PhysicalAddress.Parse("FF:FF:FF:FF:FF:FF");
+        public static IPAddress ServerIpAddress = IPAddress.Parse("192.168.1.5");
+        public static IPAddress ClientIpAddress = IPAddress.Parse("192.168.1.48");
         public static PhysicalAddress ServerPhysicalAddress = PhysicalAddress.Parse("FF:FF:FF:FF:FF:FF");
 
-        public static ILiveDevice sender;
+        public static ILiveDevice sender = InterfaceController.d1;
 
         public static ushort ClientPort = 514;
         public static ushort ServerPort = 514;
@@ -32,8 +69,8 @@ namespace PSIP_SW_Switch
             ClientIpAddress = client;
             ClientPort = cPort;
             ServerPort = sPort;
-            ClientPhysicalAddress = device.MacAddress;
             Enabled = true;
+            sender = device;
         }
 
 
@@ -47,9 +84,13 @@ namespace PSIP_SW_Switch
             Console.WriteLine(Message);
             Console.ResetColor();
             // TODO Add Packet to Queue
-            SysLogPacket sysLogPacket = new SysLogPacket(Severity, Message);
+            DateTime timestamp = DateTime.Now;
+            string msg = "[" + timestamp.ToString("yyyy/MM/dd HH:mm:ss") + "]" + Message;
+            SysLogPacket sysLogPacket = new SysLogPacket(Severity, msg);
 
             PacketForQueue pkQ = new PacketForQueue(sender, sysLogPacket);
+
+            sender.SendPacket(pkQ.ethPacket);
 
         }
 
@@ -62,11 +103,9 @@ namespace PSIP_SW_Switch
         public SysLogPacket(SysLogSeverity severity, string message)
         {
             byte facility = 16; // LOCAL 01
-            byte sev = (byte)severity;
-            byte header = (byte)((facility << 3) | sev);
+            string priority = $"<{(byte)((facility << 3) | ((byte)severity))}>";
 
-            byte[] dataBytes = Enumerable.Repeat(header, 1).Concat(Encoding.ASCII.GetBytes(message)).ToArray();
-
+            byte[] dataBytes = Encoding.UTF8.GetBytes(priority).Concat(Encoding.UTF8.GetBytes(message)).ToArray();
             // Create the UDP packet
             _udpPacket = new UdpPacket(SysLog.ServerPort,SysLog.ClientPort)
             {
@@ -87,7 +126,7 @@ namespace PSIP_SW_Switch
 
             // Create the Ethernet packet
             var ethernetPacket = new EthernetPacket(
-                SysLog.ClientPhysicalAddress,
+                SysLog.sender.MacAddress,
                 SysLog.ServerPhysicalAddress,
                                         EthernetType.IPv4) // TODO is it eth type ipv4??
             {
