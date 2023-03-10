@@ -1,102 +1,133 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace PSIP_SW_Switch
 {
     static class MACAddressTable
     {
-        private static object? _macAddressDataTableLock;
-        private static object? _macAddressRowsLock;
-        private static object? _macAddressTableLock;
 
-        private static DataTable? _macAddressDataTable;
-        private static List<DataRow>? _macAddressRows;
-        private static List<EndDeviceInfo>? _macAddressTable;
+        public static object? MacAddressTableLock;
+        public static BindingList<EndDeviceRecord>? MacAddressTable;
 
-        public static void ClearMACAddressTable()
+        public static int timerValue = 30;
+        public static object? TimerLock;
+
+        public static void Init()
         {
-            InitMACAddressTable();
+            GUIController.MacGUI.StopTimer();
+            MacAddressTable = new();
+            MacAddressTableLock = new object();
+            TimerLock = new object();
+            GUIController.MacGUI.InitNumeric();
+            GUIController.MacGUI.Init();
+            GUIController.MacGUI.StartTimer();
         }
-        public static void UpdateMACAddressTable(PacketForQueue packet)
+
+        public static void StopTimer()
         {
-            // if (cap.LinkLayerType != LinkLayers.Ethernet) // TODO co s tymto
-            //     return;
+            GUIController.MacGUI.StopTimer();
+        }
 
-            var srcMac = packet.ethPacket.SourceHardwareAddress.ToString();
-
-            if (InterfaceController.d1.MacAddress.Equals(packet.ethPacket.SourceHardwareAddress) || InterfaceController.d2.MacAddress.Equals(packet.ethPacket.SourceHardwareAddress) || isInTable(packet))
+        public static void Clear()
+        {
+            Init();
+        }
+        public static void AddRecord(PacketForQueue packet)
+        {
+            if (packet.ethPacket.DestinationHardwareAddress.Equals(PhysicalAddress.Parse("ff:ff:ff:ff:ff:ff")))
             {
                 return;
             }
 
-            var endDeviceInfo = new EndDeviceInfo(packet, InterfaceController.deviceMap[packet.device], 1800);
-
-            lock (_macAddressTableLock)
+            if (InterfaceController.d1.MacAddress.Equals(packet.ethPacket.SourceHardwareAddress)
+                ||
+                InterfaceController.d2.MacAddress.Equals(packet.ethPacket.SourceHardwareAddress))
             {
-                _macAddressTable.Add(endDeviceInfo);
+                return;
+            }
+            
+            if(IsInTable(packet, addRecord: true))
+            {
+
+                return;
             }
 
-            UpdateGUIMACAddressTable(endDeviceInfo);
-        }
-
-        private static void UpdateGUIMACAddressTable(EndDeviceInfo dev)
-        {
-            DataRow row = _macAddressDataTable.NewRow();
-
-            row["MAC Address"] = EndDeviceInfo.FormatMAC(dev.MacAddress.ToString());
-            row["Port"] = dev.Port;
-            row["Timer"] = dev.Timer;
-
-            lock (_macAddressDataTableLock)
+            lock (TimerLock)
             {
-                _macAddressDataTable.Rows.Add(row);
-            }
+                var endDeviceInfo =
+                    new EndDeviceRecord(packet, InterfaceController.deviceMap[packet.device],
+                        timerValue);
 
-            if (InterfaceController.gui.dataGridViewMACAddressTable.InvokeRequired)
-            {
-                InterfaceController.gui.dataGridViewMACAddressTable.Invoke(new Action(() => {InterfaceController.gui.dataGridViewMACAddressTable.Refresh(); })); // TODO System.NullReferenceException: 'Object reference not set to an instance of an object.'
-
+                GUIController.MacGUI.AddRecord(endDeviceInfo);
             }
         }
 
-        public static void InitMACAddressTable()
+        public static bool IsInTable(PacketForQueue packet, bool addRecord = false)
         {
-            _macAddressDataTable = new DataTable("macAddressTable");
-            _macAddressRows = new();
-            _macAddressTable = new();
-
-            _macAddressDataTableLock = new();
-            _macAddressRowsLock = new();
-            _macAddressTableLock = new();
-
-            DataColumn columnMAC = new DataColumn("MAC Address");
-            DataColumn columnPort = new DataColumn("Port");
-            DataColumn columnTimer = new DataColumn("Timer");
-
-
-            //Add the Created Columns to the Datatable
-
-            _macAddressDataTable.Columns.Add(columnMAC);
-            _macAddressDataTable.Columns.Add(columnPort);
-            _macAddressDataTable.Columns.Add(columnTimer);
-
-            InterfaceController.gui.dataGridViewMACAddressTable.DataSource = _macAddressDataTable;
-        }
-
-        public static bool isInTable(PacketForQueue packet)
-        {
-            foreach (var record in _macAddressTable)
+            var mac = addRecord ? packet.ethPacket.SourceHardwareAddress : packet.ethPacket.DestinationHardwareAddress;
+            lock (MacAddressTableLock)
             {
-                if (record.MacAddress.Equals(packet.ethPacket.DestinationHardwareAddress) && record.Port == InterfaceController.deviceMap[packet.device])
+                foreach (var record in MacAddressTable)
                 {
-                    return true;
+                    if (record.MacAddress.Equals(mac))
+                    {
+                        if (record.Port != InterfaceController.deviceMap[packet.device])
+                        {
+                            // Device moved from one port to another
+                            MacAddressTable[MacAddressTable.IndexOf(record)].Port = record.Port;
+                            SysLog.Log(SysLogSeverity.Alert, $"[MAC] Device {EndDeviceRecord.FormatMAC(record.MacAddress)} moved from port {InterfaceController.deviceMap[packet.device]} to port {record.Port}");
+                        }
+
+                        if (addRecord)
+                        {
+                            record.Timer = timerValue;
+                            GUIController.MacGUI.Refresh();
+                        }
+                        return true;
+                    }
+                }
+
+                if (addRecord)
+                {
+                    SysLog.Log(SysLogSeverity.Informational,
+                        $"[MAC] New device [{EndDeviceRecord.FormatMAC(packet.ethPacket.SourceHardwareAddress)}] on port [{InterfaceController.deviceMap[packet.device]}]");
                 }
             }
             return false;
         }
+
+        public static void UpdateRecordExpirations()
+        {
+            //GUIController.MacGUI.SuspendLayout();
+
+            lock (MacAddressTableLock)
+            {
+                foreach (var record in MacAddressTable)
+                {
+                    record.Timer--;
+                }
+            }
+
+            lock (MacAddressTableLock)
+            {
+                var expiredRecords = MacAddressTable.Where(item => item.Timer <= 0).ToList();
+                foreach (var expiredRecord in expiredRecords)
+                {
+                    MacAddressTable.Remove(expiredRecord);
+                }
+            }
+            //GUIController.MacGUI.ResumeLayout();
+            GUIController.MacGUI.Refresh();
+        }
+
+
     }
 }

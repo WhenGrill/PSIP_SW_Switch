@@ -2,12 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data;
 
 namespace PSIP_SW_Switch
 {
@@ -15,12 +17,12 @@ namespace PSIP_SW_Switch
     {
         public static MainWindow gui = Application.OpenForms.OfType<MainWindow>().FirstOrDefault();
 
-        public static class AclGui
+        public static class AclGUI
         {
-            private static DataGridViewComboBoxColumn deviceColumn;
-            private static DataGridViewComboBoxColumn aclRuleTypeColumn;
-            private static DataGridViewComboBoxColumn allowanceColumn;
-            private static DataGridViewComboBoxColumn protocolColumn;
+            private static DataGridViewTextBoxColumn deviceColumn;
+            private static DataGridViewTextBoxColumn aclRuleTypeColumn;
+            private static DataGridViewTextBoxColumn allowanceColumn;
+            private static DataGridViewTextBoxColumn protocolColumn;
 
             private static DataGridViewTextBoxColumn sourcePhysicalAddressColumn;
             private static DataGridViewTextBoxColumn destPhysicalAddressColumn;
@@ -29,56 +31,94 @@ namespace PSIP_SW_Switch
             private static DataGridViewTextBoxColumn sourcePortColumn;
             private static DataGridViewTextBoxColumn destPortColumn;
 
-            public static void InitACLDataGridview()
+            private static DataGridViewButtonColumn ruleDeleteBtnColumn;
+
+
+            public static void Init()
             {
-                // create columns for the DataGridView
+                InitComboBoxes();
+                InitDataGridView();
+            }
 
-                deviceColumn = new DataGridViewComboBoxColumn();
+            public static void InitComboBoxes()
+            {
+                gui.comboBoxACLAllowance.DataSource = Enum.GetValues(typeof(ACLAllowance));
+                gui.comboBoxACLProtocol.DataSource = Enum.GetValues(typeof(Protocol));
+                gui.comboBoxACLDirection.DataSource = Enum.GetValues(typeof(ACLRuleDirection));
+                gui.comboBoxICMPType.DataSource = Enum.GetValues(typeof(ICMPType));
+
+                gui.comboBoxACLDevice.Items.Add("1");
+                gui.comboBoxACLDevice.Items.Add("2");
+                gui.comboBoxACLDevice.Items.Add("ANY");
+                gui.comboBoxACLDevice.SelectedIndex = 0;
+            }
+            public static void InitDataGridView()
+            {
+                // TODO Chnage to observable collection
+                // TODO also make sure that MAC address is formatted
+                gui.dataGridViewACL.DataSource = null;
+                Refresh();
+
+                deviceColumn = new DataGridViewTextBoxColumn();
                 deviceColumn.DataPropertyName = "device";
+                deviceColumn.Name = deviceColumn.DataPropertyName;
                 deviceColumn.HeaderText = "Interface";
-                deviceColumn.Items.AddRange("1", "2", "ANY");
+                //deviceColumn.Items.AddRange("1", "2", "ANY");
 
-                aclRuleTypeColumn = new DataGridViewComboBoxColumn();
+                aclRuleTypeColumn = new DataGridViewTextBoxColumn();
                 aclRuleTypeColumn.DataPropertyName = "AclRuleType";
                 aclRuleTypeColumn.HeaderText = "Rule Type";
-                aclRuleTypeColumn.DataSource = Enum.GetValues(typeof(ACLRuleType));
+                aclRuleTypeColumn.Name = aclRuleTypeColumn.DataPropertyName;
+                //aclRuleTypeColumn.DataSource = Enum.GetValues(typeof(ACLRuleDirection));
 
-                allowanceColumn = new DataGridViewComboBoxColumn();
+                allowanceColumn = new DataGridViewTextBoxColumn();
                 allowanceColumn.DataPropertyName = "Allowance";
                 allowanceColumn.HeaderText = "Allowance";
-                allowanceColumn.DataSource = Enum.GetValues(typeof(ACLAllowance));
+                allowanceColumn.Name = allowanceColumn.DataPropertyName;
+                //allowanceColumn.DataSource = Enum.GetValues(typeof(ACLAllowance));
 
                 sourcePhysicalAddressColumn = new DataGridViewTextBoxColumn();
                 sourcePhysicalAddressColumn.DataPropertyName = "packetInfo.SourcePhysicalAddress";
                 sourcePhysicalAddressColumn.HeaderText = "Src. MAC";
+                sourcePhysicalAddressColumn.Name = sourcePhysicalAddressColumn.DataPropertyName;
 
                 destPhysicalAddressColumn = new DataGridViewTextBoxColumn();
                 destPhysicalAddressColumn.DataPropertyName = "packetInfo.DestinationPhysicalAddress";
                 destPhysicalAddressColumn.HeaderText = "Dst. MAC";
-
+                destPhysicalAddressColumn.Name = destPhysicalAddressColumn.DataPropertyName;
 
                 sourceIpColumn = new DataGridViewTextBoxColumn();
                 sourceIpColumn.DataPropertyName = "packetInfo.SourceIpAddress";
                 sourceIpColumn.HeaderText = "Src. IP";
+                sourceIpColumn.Name = sourceIpColumn.DataPropertyName;
 
                 destIpColumn = new DataGridViewTextBoxColumn();
                 destIpColumn.DataPropertyName = "packetInfo.DestinationIpAddress";
                 destIpColumn.HeaderText = "Dst. IP";
+                destIpColumn.Name = destIpColumn.DataPropertyName;
 
                 sourcePortColumn = new DataGridViewTextBoxColumn();
                 sourcePortColumn.DataPropertyName = "packetInfo.SourcePort";
                 sourcePortColumn.HeaderText = "Src. Port";
+                sourcePortColumn.Name = sourcePortColumn.DataPropertyName;
 
                 destPortColumn = new DataGridViewTextBoxColumn();
                 destPortColumn.DataPropertyName = "packetInfo.DestinationPort";
                 destPortColumn.HeaderText = "Dst. Port";
+                destPortColumn.Name = destPortColumn.DataPropertyName;
 
-                protocolColumn = new DataGridViewComboBoxColumn();
+                protocolColumn = new DataGridViewTextBoxColumn();
                 protocolColumn.DataPropertyName = "packetInfo.Protocol";
                 protocolColumn.HeaderText = "Protocol";
-                protocolColumn.DataSource = Enum.GetValues(typeof(Protocol));
+                protocolColumn.Name = protocolColumn.DataPropertyName;
+                //protocolColumn.DataSource = Enum.GetValues(typeof(Protocol));
 
-                gui.dataGridViewACL.AutoGenerateColumns = true;
+                ruleDeleteBtnColumn = new DataGridViewButtonColumn();
+                ruleDeleteBtnColumn.HeaderText = "Delete?";
+                ruleDeleteBtnColumn.Text = "Delete";
+                ruleDeleteBtnColumn.Name = "buttonACLRuleDelete";
+                ruleDeleteBtnColumn.UseColumnTextForButtonValue = true;
+
 
                 // add columns to the DataGridView
                 gui.dataGridViewACL.Columns.Add(deviceColumn);
@@ -87,193 +127,339 @@ namespace PSIP_SW_Switch
                 gui.dataGridViewACL.Columns.Add(sourcePhysicalAddressColumn);
                 gui.dataGridViewACL.Columns.Add(destPhysicalAddressColumn);
                 gui.dataGridViewACL.Columns.Add(sourceIpColumn);
-                gui.dataGridViewACL.Columns.Add(sourcePortColumn);
+                //gui.dataGridViewACL.Columns.Add(sourcePortColumn);
                 gui.dataGridViewACL.Columns.Add(destIpColumn);
                 gui.dataGridViewACL.Columns.Add(destPortColumn);
                 gui.dataGridViewACL.Columns.Add(protocolColumn);
-                
+                gui.dataGridViewACL.Columns.Add(ruleDeleteBtnColumn);
 
-                // Add the columns for each property
-                /*gui.dataGridViewACL.Columns.Add("AclRuleType", "ACL Rule Type");
-                DataGridViewComboBoxColumn allowColumn = new DataGridViewComboBoxColumn();
-                allowColumn.Name = "Allowance";
-                allowColumn.HeaderText = "Allowance";
-                allowColumn.DataSource = Enum.GetValues(typeof(ACLAllowance));
-                gui.dataGridViewACL.Columns.Add(allowColumn);
-                DataGridViewComboBoxColumn protocolColumn = new DataGridViewComboBoxColumn();
-                protocolColumn.Name = "Protocol";
-                protocolColumn.HeaderText = "Protocol";
-                protocolColumn.DataSource = Enum.GetValues(typeof(Protocol));
-                gui.dataGridViewACL.Columns.Add(protocolColumn);
-                gui.dataGridViewACL.Columns.Add("device", "Device");
-                gui.dataGridViewACL.Columns.Add("packetInfo.SourceIpAddress", "Source IP Address");
-                gui.dataGridViewACL.Columns.Add("packetInfo.DestinationIpAddress", "Destination IP Address");
-                gui.dataGridViewACL.Columns.Add("packetInfo.SourcePhysicalAddress", "Source Physical Address");
-                gui.dataGridViewACL.Columns.Add("packetInfo.DestinationPhysicalAddress", "Destination Physical Address");
-                gui.dataGridViewACL.Columns.Add("packetInfo.SourcePort", "Source Port");
-                gui.dataGridViewACL.Columns.Add("packetInfo.DestinationPort", "Destination Port");*/
+                // TODO DO Matches!!!!!!
 
+                // Set up the data binding between the ObservableCollection and the DataGridView
                 gui.dataGridViewACL.DataSource = ACL.AclRules;
 
-                // Enable row header drag-and-drop to allow the user to reorder rows
-                gui.dataGridViewACL.AllowUserToOrderColumns = true;
-                gui.dataGridViewACL.AllowUserToAddRows = true;
-                gui.dataGridViewACL.AllowUserToDeleteRows = true; // TODO Event to handle delete
-
-                gui.dataGridViewACL.CellBeginEdit += dataGridViewACL_onCellBeginEdit;
-                //gui.dataGridViewACL.RowsAdded += dataGridViewACL_onRowsAdded;
-                gui.dataGridViewACL.CellValidating += dataGridViewACL_onCellValidating;
-                gui.dataGridViewACL.RowsRemoved += dataGridViewACL_onRowsRemoved;
-                gui.dataGridViewACL.RowHeaderMouseClick += dataGridViewACL_onRowHeaderMouseClick;
-
-                ACLRule testRule = new ACLRule(ACLRuleType.INBOUND, new PacketInfo(), null);
-                ACLRule testRule1 = new ACLRule(ACLRuleType.INBOUND, new PacketInfo(), null);
-                ACLRule testRule2 = new ACLRule(ACLRuleType.INBOUND, new PacketInfo(), null);
-                ACL.AclRules.Add(testRule);
-                ACL.AclRules.Add(testRule1);
-                ACL.AclRules.Add(testRule2);
-
+                // Add an event handler to the CellFormatting event of the DataGridView
+                // This will allow us to format the MAC Address column
+                gui.dataGridViewACL.CellFormatting += onCellFormating;
+                gui.dataGridViewACL.CellContentClick += onCellContentClick;
+                Refresh();
             }
 
-            #region DataGridViewACL_Events
-            private static void dataGridViewACL_onCellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+            public static void Refresh()
             {
-                if (e.ColumnIndex == sourcePortColumn.Index || e.ColumnIndex == destPortColumn.Index)
+                if (gui.dataGridViewACL.InvokeRequired)
                 {
-                    var row = gui.dataGridViewACL.Rows[e.RowIndex];
-                    var protocol = (Protocol)row.Cells[protocolColumn.Index].Value;
-                    if (protocol == Protocol.ICMP)
-                    {
-                        e.Cancel = true;
-                        gui.dataGridViewACL.CurrentCell = null;
-                        gui.dataGridViewACL.Rows[e.RowIndex].Cells[e.ColumnIndex].ReadOnly = true;
-                    }
-                    else
-                    {
-                        gui.dataGridViewACL.Rows[e.RowIndex].Cells[e.ColumnIndex].ReadOnly = false;
-                    }
+                    gui.dataGridViewACL.Invoke(() => gui.dataGridViewACL.Refresh());
+                }
+                else
+                {
+                    gui.dataGridViewACL.Refresh();
                 }
             }
 
-            /*private static void dataGridViewACL_onRowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+            public static (bool, ACLRule?) AddRule()
             {
-                DataGridViewRow row = gui.dataGridViewACL.Rows[e.RowIndex];
-                ACLRuleType aclRuleType = (ACLRuleType)row.Cells["AclRuleType"].Value;
-                ACLAllowance allowance = (ACLAllowance)row.Cells["Allowance"].Value;
-                ILiveDevice? device = null;
-
-                switch (row.Cells["Device"].Value.ToString())
+                try
                 {
-                    case "1":
+                    ILiveDevice? device = null;
+                    if (gui.comboBoxACLDevice.SelectedItem.Equals("1"))
                         device = InterfaceController.d1;
-                        break;
-                    case "2":
+                    else if(gui.comboBoxACLDevice.SelectedItem.Equals("2"))
                         device = InterfaceController.d2;
-                        break;
-                    case "ANY":
-                        device = null;
-                        break;
-                }
+                        
+                    ACLAllowance allowance = (ACLAllowance)gui.comboBoxACLAllowance.SelectedValue;
+                    ACLRuleDirection direction = (ACLRuleDirection)gui.comboBoxACLAllowance.SelectedValue;
+                    Protocol protocol = (Protocol)gui.comboBoxACLProtocol.SelectedValue;
+                    ushort Port = ushort.Parse(gui.numericUpDownACLDstPort.Text);
 
-                PacketInfo packetInfo = new PacketInfo
-                {
-                    SourceIpAddress = (IPAddress?)row.Cells["SourceIpAddress"].Value,
-                    DestinationIpAddress = (IPAddress?)row.Cells["DestinationIpAddress"].Value,
-                    SourcePhysicalAddress = (PhysicalAddress?)row.Cells["SourcePhysicalAddress"].Value,
-                    DestinationPhysicalAddress = (PhysicalAddress?)row.Cells["DestinationPhysicalAddress"].Value,
-                    SourcePort = (int?)row.Cells["SourcePort"].Value,
-                    DestinationPort = (int?)row.Cells["DestinationPort"].Value,
-                    Protocol = (Protocol?)row.Cells["Protocol"].Value
-                };
-                ACLRule aclRule = new ACLRule(aclRuleType, packetInfo, device);
 
-                lock (ACL.AclRulesListLock)
-                {
-                    // TODO check ci je to tu potrebne
-                    ACL.AclRules.Add(aclRule);
-                    gui.dataGridViewACL.DataSource = null;
-                    gui.dataGridViewACL.DataSource = ACL.AclRules;
-                }
-            }*/
+                    PhysicalAddress srcMAC;
+                    PhysicalAddress dstMAC;
+                    IPAddress srcIP;
+                    IPAddress dstIP;
+                    ICMPType icmpType = ICMPType.ANY;
+                    
 
-            private static void dataGridViewACL_onCellValidating(object sender, DataGridViewCellValidatingEventArgs e)
-            {
-                DataGridViewCell cell = gui.dataGridViewACL.Rows[e.RowIndex].Cells[e.ColumnIndex];
-
-                // Check if the column is AclRuleType
-                if (cell.OwningColumn.Name == "AclRuleType")
-                {
-                    // Check if the value is null or empty
-                    if (string.IsNullOrEmpty(e.FormattedValue?.ToString()))
+                    if (gui.textBoxACLSrcMAC.Text == "")
                     {
-                        e.Cancel = true;
-                        gui.dataGridViewACL.Rows[e.RowIndex].ErrorText = "Rule Type cannot be empty";
+                        srcMAC = PhysicalAddress.None;
                     }
                     else
                     {
-                        gui.dataGridViewACL.Rows[e.RowIndex].ErrorText = "";
+
+                        if (!PhysicalAddress.TryParse(gui.textBoxACLSrcMAC.Text, out srcMAC))
+                        {
+                            throw new InvalidDataException("Source MAC address in bad format");
+                        }
                     }
-                }
-                else if (cell.OwningColumn.Name == "Allowance")
-                {
-                    // Check if the value is null or empty
-                    if (string.IsNullOrEmpty(e.FormattedValue?.ToString()))
+
+                    if (gui.textBoxACLCLientMAC.Text == "")
                     {
-                        e.Cancel = true;
-                        gui.dataGridViewACL.Rows[e.RowIndex].ErrorText = "Allowance cannot be empty";
+                        dstMAC = PhysicalAddress.None;
                     }
                     else
                     {
-                        gui.dataGridViewACL.Rows[e.RowIndex].ErrorText = "";
+                        if (!PhysicalAddress.TryParse(gui.textBoxACLCLientMAC.Text, out dstMAC))
+                        {
+                            throw new InvalidDataException("Destination MAC address in bad format");
+                        }
+                    }
+
+                    if (gui.textBoxACLSrvIP.Text == "")
+                    {
+                        srcIP = IPAddress.Any;
+                    }
+                    else
+                    {
+
+                        if (!IPAddress.TryParse(gui.textBoxACLSrvIP.Text, out srcIP))
+                        {
+                            throw new InvalidDataException("Source IP address in bad format");
+                        }
+                    }
+
+                    if (gui.textBoxACLClientIP.Text == "")
+                    {
+                        dstIP = IPAddress.Any;
+                    }
+                    else
+                    {
+                        if (!IPAddress.TryParse(gui.textBoxACLClientIP.Text, out dstIP))
+                        {
+                            throw new InvalidDataException("Destination IP address in bad format");
+                        }
+                    }
+
+                    if (gui.comboBoxICMPType.Enabled)
+                    {
+                        icmpType = (ICMPType)gui.comboBoxICMPType.SelectedIndex;
+                    }
+
+                    PacketInfo packetTemplate = new PacketInfo(srcMAC, dstMAC, srcIP, dstIP,  Port, protocol, icmpType);
+                    ACLRule rule = new ACLRule(direction, allowance, device, packetTemplate);
+                    lock (ACL.AclRulesListLock)
+                    {
+                        if (gui.dataGridViewACL.InvokeRequired)
+                        {
+                            gui.dataGridViewACL.Invoke(() => ACL.AclRules.Add(rule));
+                        }
+                        else
+                        {
+                            ACL.AclRules.Add(rule);
+                        }
+                    }
+                    return (true, rule);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message, "ACE - Wrong format", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return (false, null);
+                }
+            }
+
+            private static void onCellFormating(object sender, DataGridViewCellFormattingEventArgs e)
+            {
+                // Check if we're formatting the MAC Address column
+                if(e.ColumnIndex == gui.dataGridViewACL.Columns["device"].Index){
+                    if (e.Value == null || e.Value == "ANY")
+                        e.Value = "ANY";
+                    else
+                    {
+                        var dev = (ILiveDevice)e.Value;
+                        e.Value = (dev == InterfaceController.d1) ? "1" : "2";
+                    }
+
+                    e.FormattingApplied = true;
+                } else if (e.ColumnIndex == gui.dataGridViewACL.Columns["packetInfo.SourcePhysicalAddress"].Index
+                           ||
+                           e.ColumnIndex == gui.dataGridViewACL.Columns["packetInfo.DestinationPhysicalAddress"].Index)
+                {
+                    if(e.Value == null)
+                        return;
+
+                    // Get the MAC address value from the EndDeviceRecord object
+                    PhysicalAddress macAddress = (PhysicalAddress)e.Value;
+
+                    // Format the MAC address using the formatMAC function
+                    string formattedMACAddress = EndDeviceRecord.FormatMAC(macAddress);
+
+                    // Set the formatted value in the cell
+                    e.Value = formattedMACAddress == "" ? "ANY" : formattedMACAddress;
+                    e.FormattingApplied = true;
+                } else if (e.ColumnIndex == gui.dataGridViewACL.Columns["packetInfo.SourceIpAddress"].Index
+                           ||
+                           e.ColumnIndex == gui.dataGridViewACL.Columns["packetInfo.DestinationIpAddress"].Index)
+                {
+                    if (e.Value == null)
+                        return;
+
+                    IPAddress ip = (IPAddress)(e.Value);
+
+                    e.Value = ip.Equals(IPAddress.Any) ? "ANY" : ip.ToString();
+                    e.FormattingApplied = true;
+                }
+            }
+
+            private static void onCellContentClick(object s, DataGridViewCellEventArgs e)
+            {
+                if (e.ColumnIndex == gui.dataGridViewACL.Columns["buttonACLRuleDelete"].Index)
+                {
+                    DialogResult delete = MessageBox.Show("Are you sure you want to delete this rule?",
+                        "ACE Removal", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (delete == DialogResult.Yes)
+                    {
+                        RemoveAt(e.RowIndex);
+                        Refresh();
+                    }
+
+                }
+            }
+
+            public static void RemoveAt(int index)
+            {
+                lock (ACL.AclRulesListLock)
+                {
+                    if (gui.dataGridViewACL.InvokeRequired)
+                    {
+                        gui.dataGridViewACL.Invoke(() => { ACL.AclRules.RemoveAt(index); });
+                    }
+                    else
+                    {
+                        ACL.AclRules.RemoveAt(index);
                     }
                 }
-            }
-
-            private static void dataGridViewACL_onRowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
-            {
-                var s = (DataGridView)sender;
-                s.Refresh();
-                // Get the removed row
-                DataGridViewRow row = gui.dataGridViewACL.Rows[e.RowIndex];
-
-                // Get the corresponding ACLRule object
-                ACLRule aclRule = (ACLRule)row.DataBoundItem;
-
-                // Remove the ACLRule object from the bound list
-                lock (ACL.AclRulesListLock)
-                {
-                    // TODO check if fine
-                    ACL.AclRules.Remove(aclRule);
-                    gui.dataGridViewACL.DataSource = null;
-                    gui.dataGridViewACL.DataSource = ACL.AclRules;
-                }
-            }
-
-            [Description("Handle the RowHeaderMouseClick event to update the binding list when rows are reordered")]
-            private static void dataGridViewACL_onRowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
-            {
-                // Get the selected ACLRule object
-                var item = ACL.AclRules[e.RowIndex];
-
-                lock (ACL.AclRulesListLock)
-                {
-                    // Remove it from the binding list
-                    ACL.AclRules.RemoveAt(e.RowIndex);
-
-                    // Insert it at the new position
-                    ACL.AclRules.Insert(e.RowIndex, item);
-
-                    // Rebind the DataGridView to the updated binding list
-                    gui.dataGridViewACL.DataSource = null;
-                    gui.dataGridViewACL.DataSource = ACL.AclRules;
-                }
-            }
-
-            #endregion
+            }  
 
         }
 
-        
+        public static class MacGUI
+        {
+            public static void InitNumeric()
+            {
+                gui.numericUpDownMACAddressTableTimerValue.Value = 30;
+                gui.numericUpDownMACAddressTableTimerValue.Minimum = 0;
+                gui.numericUpDownMACAddressTableTimerValue.Maximum = int.MaxValue;
+            }
+            public static void Init()
+            {
+                gui.dataGridViewMACAddressTable.DataSource = null;
+                Refresh();
 
+                // Add a column to the DataGridView for the formatted MAC address
+                DataGridViewColumn macAddressColumn = new DataGridViewTextBoxColumn();
+                macAddressColumn.Name = "MAC Address";
+                macAddressColumn.DataPropertyName = "MacAddress"; // bind to the MACAddress property
+                gui.dataGridViewMACAddressTable.Columns.Add(macAddressColumn);
+
+                foreach (var prop in typeof(EndDeviceRecord).GetProperties())
+                {
+                    if (prop.Name != "MacAddress")
+                    {
+                        DataGridViewColumn column = new DataGridViewTextBoxColumn();
+                        column.Name = prop.Name;
+                        column.DataPropertyName = prop.Name; // bind to the property
+                        gui.dataGridViewMACAddressTable.Columns.Add(column);
+                    }
+                }
+
+                // Set up the data binding between the ObservableCollection and the DataGridView
+                gui.dataGridViewMACAddressTable.DataSource = MACAddressTable.MacAddressTable;
+
+                // Add an event handler to the CellFormatting event of the DataGridView
+                // This will allow us to format the MAC Address column
+                gui.dataGridViewMACAddressTable.CellFormatting += onCellFormating;
+                Refresh();
+            }
+
+            public static void AddRecord(EndDeviceRecord rec)
+            {
+                lock (MACAddressTable.MacAddressTableLock)
+                {
+                    if (GUIController.gui.dataGridViewMACAddressTable.InvokeRequired)
+                    {
+                        GUIController.gui.dataGridViewMACAddressTable.BeginInvoke(new Action(() =>
+                        {
+                            // This code will be executed on the UI thread
+                            MACAddressTable.MacAddressTable.Add(rec);
+                        }));
+                    }
+                    else
+                    {
+                        // This code is already running on the UI thread
+                        MACAddressTable.MacAddressTable.Add(rec);
+                    }
+
+                }
+            }
+
+            public static void StopTimer()
+            {
+                gui.MacTableTimer.Enabled = false;
+            }
+
+            public static void StartTimer()
+            {
+                gui.MacTableTimer.Interval = 1000;
+                gui.MacTableTimer.Enabled = true;
+            }
+
+            public static void Refresh()
+            {
+                if (gui.dataGridViewMACAddressTable.InvokeRequired)
+                {
+                    gui.dataGridViewMACAddressTable.Invoke(new Action(() =>
+                    {
+                        gui.dataGridViewMACAddressTable.Refresh();
+                    }));
+                }
+                else
+                {
+                    gui.dataGridViewMACAddressTable.Refresh();
+                }
+            }
+
+            public static void ResumeLayout()
+            {
+                if (gui.dataGridViewMACAddressTable.InvokeRequired)
+                {
+                    gui.dataGridViewMACAddressTable.Invoke(new Action(() =>
+                    {
+                        gui.dataGridViewMACAddressTable.ResumeLayout();
+                    }));
+                } else
+                    gui.dataGridViewMACAddressTable.ResumeLayout();
+            }
+
+            public static void SuspendLayout()
+            {
+                if (gui.dataGridViewMACAddressTable.InvokeRequired)
+                {
+                    gui.dataGridViewMACAddressTable.Invoke(new Action(() =>
+                    {
+                        gui.dataGridViewMACAddressTable.SuspendLayout();
+                    }));
+                }
+                else
+                    gui.dataGridViewMACAddressTable.SuspendLayout();
+            }
+
+            private static void onCellFormating(object sender, DataGridViewCellFormattingEventArgs e)
+            {
+                // Check if we're formatting the MAC Address column
+                if (e.ColumnIndex == gui.dataGridViewMACAddressTable.Columns["MAC Address"].Index && e.Value != null)
+                {
+                    // Get the MAC address value from the EndDeviceRecord object
+                    PhysicalAddress macAddress = (PhysicalAddress)e.Value;
+
+                    // Format the MAC address using the formatMAC function
+                    string formattedMACAddress = EndDeviceRecord.FormatMAC(macAddress);
+
+                    // Set the formatted value in the cell
+                    e.Value = formattedMACAddress;
+                    e.FormattingApplied = true;
+                }
+            }
+        }
     }
 }

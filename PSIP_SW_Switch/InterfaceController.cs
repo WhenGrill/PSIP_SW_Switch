@@ -1,4 +1,6 @@
-﻿using SharpPcap;
+﻿using System.Collections.Specialized;
+using System.ComponentModel;
+using SharpPcap;
 using System.Data;
 using System.Net.NetworkInformation;
 using PacketDotNet;
@@ -16,9 +18,14 @@ namespace PSIP_SW_Switch
         public static ILiveDevice? d1;
         public static ILiveDevice? d2;
 
+        public static bool d1CableDisconnected = false;
+        public static bool d2CableDisconnected = false;
+
+        public static DateTime d1LastPacketArrival;
+        public static DateTime d2LastPacketArrival;
+
         static CaptureDeviceList _devices = CaptureDeviceList.Instance;
         private static List<ILiveDevice>? _openedDevices;
-
 
 
         public static Dictionary<ILiveDevice, int>? deviceMap;
@@ -26,8 +33,10 @@ namespace PSIP_SW_Switch
         private static bool _networkInterfaceSenderThreadStop;
         private static Thread? _networkInterfaceSenderThread;
 
+        private static bool Started = false;
 
-        public static void InitInterfaceController()
+
+        public static void Init()
         {
             gui = Application.OpenForms.OfType<MainWindow>().FirstOrDefault();
             if (gui == null)
@@ -37,7 +46,6 @@ namespace PSIP_SW_Switch
                 Application.Exit();
             }
             GUIRefreshInterfaces();
-            MACAddressTable.InitMACAddressTable();
         }
 
         public static void GUIRefreshInterfaces()
@@ -92,6 +100,7 @@ namespace PSIP_SW_Switch
                 InitNetworkInterfaceSenderThread();
                 StartNetworkInterfaceCapture(d1);
                 StartNetworkInterfaceCapture(d2);
+                Started = true;
             }
             catch (Exception ex)
             {
@@ -101,6 +110,9 @@ namespace PSIP_SW_Switch
 
         public static void InterfaceCaptureStop()
         {
+            if (!Started)
+                return;
+
             try
             {
                 _networkInterfaceSenderThreadStop = true;
@@ -109,6 +121,7 @@ namespace PSIP_SW_Switch
                 d2.StopCapture();
 
                 CloseNetworkInterfaces();
+                Started = false;
             }
             catch (Exception ex)
             {
@@ -123,9 +136,16 @@ namespace PSIP_SW_Switch
             try
             {
                 ILiveDevice device = (ILiveDevice)sender;
+
+                if(device == d1)
+                    d1LastPacketArrival = DateTime.Now;
+                else if(device == d2)
+                    d2LastPacketArrival = DateTime.Now;
+
+
                 RawCapture cap = e.GetPacket();
 
-                if (ACL.Enabled  && !ACL.IsAllowed(cap, device)) // ACL Enabled and if not Allowed
+                if (ACL.Enabled  && !ACL.IsAllowed(cap, ACLRuleDirection.INBOUND)) // ACL Enabled and if not Allowed
                 {
                     return;
                 }
@@ -137,7 +157,7 @@ namespace PSIP_SW_Switch
                     CapturedQueue.Enqueue(p);
                 }
                 Statistics.UpdateStatistics((device == d1) ? 1 : 2, p, true);
-                //MACAddressTable.UpdateMACAddressTable(p); // TODO Collection modified
+                MACAddressTable.AddRecord(p); // TODO Collection modified
             }
 
             catch (Exception ex)
@@ -236,7 +256,7 @@ namespace PSIP_SW_Switch
                     {
                         try
                         {
-                            if (ACL.Enabled && !ACL.IsAllowed(qPacket))
+                            if (ACL.Enabled && !ACL.IsAllowed(qPacket, ACLRuleDirection.OUTBOUND))
                             {
                                 continue;
                             }
@@ -248,7 +268,7 @@ namespace PSIP_SW_Switch
                                 throw new Exception("Invalid device");
                             }
 
-                            if (MACAddressTable.isInTable(qPacket))
+                            if (MACAddressTable.IsInTable(qPacket))
                             {
                                 senderDevice.SendPacket(qPacket.ethPacket);
                             }
@@ -310,17 +330,53 @@ namespace PSIP_SW_Switch
 
     }
 
-    public class EndDeviceInfo
+    public class EndDeviceRecord : INotifyPropertyChanged
     {
-        public PhysicalAddress MacAddress { get; set; }
-        public int Port { get; set; }
-        public int Timer { get; set; }
+        private PhysicalAddress _macAddress;
+        public PhysicalAddress MacAddress
+        {
+            get { return _macAddress; }
+            set
+            {
+                _macAddress = value;
+                OnPropertyChanged("MacAddress");
+            }
+        }
 
-        public EndDeviceInfo(PacketForQueue packet, int port,  int timer)
+        private int _port;
+        public int Port
+        {
+            get { return _port; }
+            set
+            {
+                _port = value;
+                OnPropertyChanged("Port");
+            }
+        }
+
+        private int _timer;
+        public int Timer
+        {
+            get { return _timer; }
+            set
+            {
+                _timer = value;
+                OnPropertyChanged("Timer");
+            }
+        }
+
+        public EndDeviceRecord(PacketForQueue packet, int port, int timer)
         {
             MacAddress = packet.ethPacket.SourceHardwareAddress;
             Port = port;
             Timer = timer;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public static string FormatMAC<T>(T mac)

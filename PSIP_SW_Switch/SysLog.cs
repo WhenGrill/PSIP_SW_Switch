@@ -91,6 +91,9 @@ namespace PSIP_SW_Switch
                     lock (InterfaceController.CapturedQueueLock)
                     {
                         InterfaceController.CapturedQueue.Enqueue(pkQ);
+
+                        // TODO DEBUG Remove
+                        Console.WriteLine(msg);
                     }
                 }
                 );
