@@ -39,7 +39,7 @@ namespace PSIP_SW_Switch
         public static DataTable int1Stats;
         public static DataTable int2Stats;
 
-        public static void InitGUI()
+        public static void Init()
         {
             int1Stats = new DataTable("int1Stats");
             int2Stats = new DataTable("int2Stats");
