@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Windows.Forms;
 
@@ -15,6 +16,7 @@ namespace PSIP_SW_Switch
             InterfaceController.Init();
             Statistics.Init();
             ACL.Init();
+            SysLog.Enabled = checkBoxACLEnabled.Checked;
             buttonSwitchEnable.Enabled = false;
             buttonSwitchDisable.Enabled = false;
 
@@ -30,6 +32,14 @@ namespace PSIP_SW_Switch
             buttonACLAddRule.Enabled = false;
             buttonACLDeleteAll.Enabled = false;
             checkBoxACLEnabled.Enabled = false;
+
+            radioButtonSysLogInt1.Checked = true;
+            radioButtonSysLogInt2.Checked = false;
+
+            buttonSysLogConfigure.Enabled = false;
+            checkBoxSysLogEnabled.Enabled = false;
+
+            MACTableGUITimer.Enabled = false;
 
         }
 
@@ -58,9 +68,15 @@ namespace PSIP_SW_Switch
             buttonACLAddRule.Enabled = true;
             buttonACLDeleteAll.Enabled = true;
             checkBoxACLEnabled.Enabled = true;
+            buttonSysLogConfigure.Enabled = true;
+            checkBoxSysLogEnabled.Enabled = true;
+
+            CableDetectionTimer.Enabled = true;
+            MACTableGUITimer.Enabled = true;
 
             labelInt1Stat.Text = labelInt1Stat.Text + " - " + comboBoxInterfaceList1.SelectedItem.ToString();
             labelInt2Stat.Text = labelInt2Stat.Text + " - " + comboBoxInterfaceList2.SelectedItem.ToString();
+
         }
         private void comboBoxInterfaceList1_SelectedValueChanged(object sender, EventArgs e)
         {
@@ -97,7 +113,9 @@ namespace PSIP_SW_Switch
             buttonRefreshInterfacesLists.Enabled = true;
             labelInt1Stat.Text = "Interface 1";
             labelInt2Stat.Text = "Interface 2";
-            
+            CableDetectionTimer.Enabled = false;
+            MACTableGUITimer.Enabled = false;
+
         }
 
         private void buttonInt1StatReset_Click(object sender, EventArgs e)
@@ -150,12 +168,7 @@ namespace PSIP_SW_Switch
                 ushort srvPort = ushort.Parse(textBoxSysLogServerPort.Text);
                 ushort clientPort = ushort.Parse(textBoxSysLogClientPort.Text);
 
-                SysLog.ServerIpAddress = srvIP;
-                SysLog.ClientIpAddress = clientIP;
-                SysLog.ServerPort = srvPort;
-                SysLog.ClientPort = clientPort;
-
-                SysLog.sender = (radioButtonSysLogInt1.Checked) ? InterfaceController.d1 : InterfaceController.d2;
+                SysLog.InitSysLogClient(srvIP, clientIP, clientPort, srvPort, (radioButtonSysLogInt1.Checked) ? InterfaceController.d2 : InterfaceController.d1);
             }
             catch
             {
@@ -172,7 +185,7 @@ namespace PSIP_SW_Switch
 
         private void radioButtonSysLogInt2_CheckedChanged(object sender, EventArgs e)
         {
-            radioButtonSysLogInt2.Checked = !radioButtonSysLogInt1.Checked;
+            radioButtonSysLogInt1.Checked = !radioButtonSysLogInt2.Checked;
         }
 
         private void checkBoxSysLogEnabled_CheckedChanged(object sender, EventArgs e)
@@ -182,15 +195,38 @@ namespace PSIP_SW_Switch
 
         private void CableDetectionTimer_Tick(object sender, EventArgs e)
         {
-            var d1ElapsedTime = DateTime.Now - InterfaceController.d1LastPacketArrival;
-            var d2ElapsedTime = DateTime.Now - InterfaceController.d2LastPacketArrival;
-
-            if ((decimal)d1ElapsedTime.TotalSeconds > numericUpDownCableDetectionSeconds.Value)
+            double d1ElapsedTime, d2ElapsedTime;
+            lock (InterfaceController.PacketArrivalLock)
             {
-                InterfaceController.d1CableDisconnected = true;
-                SysLog.Log(SysLogSeverity.Critical, "[INTERFACE] [1] Cable Disconnected!");
-                labeld1CableConnected.Text = "DISCONNECTED";
-                labeld1CableConnected.ForeColor = Color.Red;
+                DateTime now = DateTime.UtcNow;
+                d1ElapsedTime = (now - InterfaceController.d1LastPacketArrival).TotalSeconds;
+                d2ElapsedTime = (now - InterfaceController.d2LastPacketArrival).TotalSeconds;
+            }
+
+            if (d1ElapsedTime > double.Parse(numericUpDownCableDetectionSeconds.Text))
+            {
+                if (!InterfaceController.d1CableDisconnected)
+                {
+                    InterfaceController.d1CableDisconnected = true;
+                    SysLog.Log(SysLogSeverity.Warning, "[INTERFACE] [1] Cable Disconnected!");
+                    labeld1CableConnected.Text = "DISCONNECTED";
+                    labeld1CableConnected.ForeColor = Color.Red;
+                    MACAddressTable.RemoveInvalidRecords(InterfaceController.d1);
+                }
+                else
+                {
+                    try
+                    {
+                        InterfaceController.d1.Close();
+                        InterfaceController.OpenNetworkInterface(InterfaceController.d1);
+                        InterfaceController.StartNetworkInterfaceCapture(InterfaceController.d1);
+                    }
+                    catch (IOException ex)
+                    {
+                        MessageBox.Show(ex.Message, "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                        buttonSwitchDisable_Click(sender, e);
+                    }
+                }
             }
             else
             {
@@ -203,12 +239,30 @@ namespace PSIP_SW_Switch
                 }
             }
 
-            if ((decimal)d2ElapsedTime.TotalSeconds > numericUpDownCableDetectionSeconds.Value)
+            if (d2ElapsedTime > double.Parse(numericUpDownCableDetectionSeconds.Text))
             {
-                InterfaceController.d2CableDisconnected = true;
-                SysLog.Log(SysLogSeverity.Critical, "[INTERFACE] [2] Cable Disconnected!");
-                labeld2CableConnected.Text = "DISCONNECTED";
-                labeld2CableConnected.ForeColor = Color.Red;
+                if (!InterfaceController.d2CableDisconnected)
+                {
+                    InterfaceController.d2CableDisconnected = true;
+                    SysLog.Log(SysLogSeverity.Warning, "[INTERFACE] [2] Cable Disconnected!");
+                    labeld2CableConnected.Text = "DISCONNECTED";
+                    labeld2CableConnected.ForeColor = Color.Red;
+                    MACAddressTable.RemoveInvalidRecords(InterfaceController.d2);
+                }
+                else
+                {
+                    try
+                    {
+                        InterfaceController.d2.Close();
+                        InterfaceController.OpenNetworkInterface(InterfaceController.d2);
+                        InterfaceController.StartNetworkInterfaceCapture(InterfaceController.d2);
+                    }
+                    catch (IOException ex)
+                    {
+                        MessageBox.Show(ex.Message, "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                        buttonSwitchDisable_Click(sender, e);
+                    }
+                }
             }
             else
             {
@@ -247,21 +301,17 @@ namespace PSIP_SW_Switch
         {
             if (checkBoxACLEnabled.Checked)
             {
-                SysLog.Log(SysLogSeverity.Alert, "[ACL] [UP]: ACL Processing turned on.");
+                ACL.EnableProcessing();
+                SysLog.Log(SysLogSeverity.Warning, "[ACL] [UP]: ACL Processing turned on.");
                 
             }
             else
             {
-                SysLog.Log(SysLogSeverity.Alert, "[ACL] [DOWN]: ACL Processing has been turned off");
+                ACL.DisableProcessing();
+                SysLog.Log(SysLogSeverity.Warning, "[ACL] [DOWN]: ACL Processing has been turned off");
             }
 
-            ACL.Enabled = checkBoxACLEnabled.Checked;
         }
-
-        private void buttonCableStatusSetSeconds_Click(object sender, EventArgs e)
-        {
-        }
-
         private void numericUpDownACLDstPort_ValueChanged(object sender, EventArgs e)
         {
             if (numericUpDownACLDstPort.Value > 0)
@@ -271,6 +321,24 @@ namespace PSIP_SW_Switch
             {
                 numericUpDownACLDstPort.Text = "ANY";
             }
+        }
+
+        private void buttonACLDeleteAll_Click(object sender, EventArgs e)
+        {
+            ACL.DeleteAllRules();
+        }
+
+        private void ACLTableUpdater_Tick(object sender, EventArgs e)
+        {
+            ACL.RefreshGUI();
+        }
+
+        private void MACTableGUITimer_Tick(object sender, EventArgs e)
+        {
+            //Console.WriteLine($"Tick -> {MACAddressTable.MacAddressTable.Count} MAC Addresses");
+            //GUIController.MacGUI.SuspendLayout();
+            //GUIController.MacGUI.Refresh();
+            //GUIController.MacGUI.ResumeLayout();
         }
     }
 }

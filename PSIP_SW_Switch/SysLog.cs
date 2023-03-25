@@ -51,25 +51,24 @@ namespace PSIP_SW_Switch
 
     static class SysLog
     {
-        public static bool Enabled = true;
+        public static bool Enabled = false;
 
-        public static IPAddress ServerIpAddress = IPAddress.Parse("192.168.1.5");
-        public static IPAddress ClientIpAddress = IPAddress.Parse("192.168.1.48");
+        public static IPAddress ServerIpAddress = IPAddress.Broadcast;
+        public static IPAddress ClientIpAddress = IPAddress.Broadcast;
         public static PhysicalAddress ServerPhysicalAddress = PhysicalAddress.Parse("FF:FF:FF:FF:FF:FF");
 
-        public static ILiveDevice sender = InterfaceController.d1;
+        public static ILiveDevice sender = InterfaceController.d2; // D2 becasue sender implies that it was recieved on D2 so it must be send on D1
 
         public static ushort ClientPort = 514;
         public static ushort ServerPort = 514;
 
 
-        static void InitSysLogClient(IPAddress srv, IPAddress client, ushort cPort, ushort sPort, ILiveDevice device)
+        public static void InitSysLogClient(IPAddress srv, IPAddress client, ushort cPort, ushort sPort, ILiveDevice device)
         {
             ServerIpAddress = srv;
             ClientIpAddress = client;
             ClientPort = cPort;
             ServerPort = sPort;
-            Enabled = true;
             sender = device;
         }
 
@@ -78,8 +77,8 @@ namespace PSIP_SW_Switch
         public static void Log(SysLogSeverity Severity, string Message)
         {
             // TODO check if threading like this is fine
-            Task.Run(() =>
-                {
+            //Task.Run(() =>
+            //    {
                     if (!Enabled)
                         return;
 
@@ -95,8 +94,8 @@ namespace PSIP_SW_Switch
                         // TODO DEBUG Remove
                         Console.WriteLine(msg);
                     }
-                }
-                );
+              //  }
+            //    );
             
         }
 
@@ -113,7 +112,7 @@ namespace PSIP_SW_Switch
 
             byte[] dataBytes = Encoding.UTF8.GetBytes(priority).Concat(Encoding.UTF8.GetBytes(message)).ToArray();
             // Create the UDP packet
-            _udpPacket = new UdpPacket(SysLog.ServerPort,SysLog.ClientPort)
+            _udpPacket = new UdpPacket(SysLog.ClientPort, SysLog.ServerPort)
             {
                 PayloadData = dataBytes
             };

@@ -30,10 +30,14 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.labelIntName1 = new System.Windows.Forms.Label();
             this.groupBoxSwitchSettings = new System.Windows.Forms.GroupBox();
             this.groupBoxACL = new System.Windows.Forms.GroupBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.numericUpDownACLSrcPort = new System.Windows.Forms.NumericUpDown();
             this.checkBoxACLEnabled = new System.Windows.Forms.CheckBox();
             this.buttonACLDeleteAll = new System.Windows.Forms.Button();
             this.comboBoxICMPType = new System.Windows.Forms.ComboBox();
@@ -59,7 +63,6 @@
             this.textBoxACLCLientMAC = new System.Windows.Forms.TextBox();
             this.groupBoxCableStatus = new System.Windows.Forms.GroupBox();
             this.label16 = new System.Windows.Forms.Label();
-            this.buttonCableStatusSetSeconds = new System.Windows.Forms.Button();
             this.labeld2CableConnected = new System.Windows.Forms.Label();
             this.labelInterfaceCableConnected2 = new System.Windows.Forms.Label();
             this.labelInterfaceCableConnected1 = new System.Windows.Forms.Label();
@@ -104,8 +107,11 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.MacTableTimer = new System.Windows.Forms.Timer(this.components);
             this.CableDetectionTimer = new System.Windows.Forms.Timer(this.components);
+            this.ACLTableUpdater = new System.Windows.Forms.Timer(this.components);
+            this.MACTableGUITimer = new System.Windows.Forms.Timer(this.components);
             this.groupBoxSwitchSettings.SuspendLayout();
             this.groupBoxACL.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownACLSrcPort)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownACLDstPort)).BeginInit();
             this.groupBoxCableStatus.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCableDetectionSeconds)).BeginInit();
@@ -149,6 +155,8 @@
             // 
             // groupBoxACL
             // 
+            this.groupBoxACL.Controls.Add(this.label17);
+            this.groupBoxACL.Controls.Add(this.numericUpDownACLSrcPort);
             this.groupBoxACL.Controls.Add(this.checkBoxACLEnabled);
             this.groupBoxACL.Controls.Add(this.buttonACLDeleteAll);
             this.groupBoxACL.Controls.Add(this.comboBoxICMPType);
@@ -180,13 +188,36 @@
             this.groupBoxACL.TabStop = false;
             this.groupBoxACL.Text = "ACL/ACE Control";
             // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label17.Location = new System.Drawing.Point(939, 28);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(65, 20);
+            this.label17.TabIndex = 38;
+            this.label17.Text = "Src. Port:";
+            // 
+            // numericUpDownACLSrcPort
+            // 
+            this.numericUpDownACLSrcPort.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.numericUpDownACLSrcPort.Location = new System.Drawing.Point(1012, 22);
+            this.numericUpDownACLSrcPort.Maximum = new decimal(new int[] {
+            65535,
+            0,
+            0,
+            0});
+            this.numericUpDownACLSrcPort.Name = "numericUpDownACLSrcPort";
+            this.numericUpDownACLSrcPort.Size = new System.Drawing.Size(151, 27);
+            this.numericUpDownACLSrcPort.TabIndex = 37;
+            // 
             // checkBoxACLEnabled
             // 
             this.checkBoxACLEnabled.AutoSize = true;
-            this.checkBoxACLEnabled.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.checkBoxACLEnabled.Location = new System.Drawing.Point(1306, 29);
+            this.checkBoxACLEnabled.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.checkBoxACLEnabled.Location = new System.Drawing.Point(1198, 21);
             this.checkBoxACLEnabled.Name = "checkBoxACLEnabled";
-            this.checkBoxACLEnabled.Size = new System.Drawing.Size(180, 24);
+            this.checkBoxACLEnabled.Size = new System.Drawing.Size(211, 27);
             this.checkBoxACLEnabled.TabIndex = 36;
             this.checkBoxACLEnabled.Text = "Enable ACL Processing";
             this.checkBoxACLEnabled.UseVisualStyleBackColor = true;
@@ -194,18 +225,20 @@
             // 
             // buttonACLDeleteAll
             // 
-            this.buttonACLDeleteAll.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.buttonACLDeleteAll.Location = new System.Drawing.Point(1306, 65);
+            this.buttonACLDeleteAll.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.buttonACLDeleteAll.ForeColor = System.Drawing.Color.Red;
+            this.buttonACLDeleteAll.Location = new System.Drawing.Point(1418, 17);
             this.buttonACLDeleteAll.Name = "buttonACLDeleteAll";
-            this.buttonACLDeleteAll.Size = new System.Drawing.Size(186, 30);
+            this.buttonACLDeleteAll.Size = new System.Drawing.Size(95, 45);
             this.buttonACLDeleteAll.TabIndex = 35;
-            this.buttonACLDeleteAll.Text = "Delete All Rules";
+            this.buttonACLDeleteAll.Text = "Delete ALL";
             this.buttonACLDeleteAll.UseVisualStyleBackColor = true;
+            this.buttonACLDeleteAll.Click += new System.EventHandler(this.buttonACLDeleteAll_Click);
             // 
             // comboBoxICMPType
             // 
             this.comboBoxICMPType.FormattingEnabled = true;
-            this.comboBoxICMPType.Location = new System.Drawing.Point(1037, 61);
+            this.comboBoxICMPType.Location = new System.Drawing.Point(1258, 59);
             this.comboBoxICMPType.Name = "comboBoxICMPType";
             this.comboBoxICMPType.Size = new System.Drawing.Size(151, 28);
             this.comboBoxICMPType.TabIndex = 17;
@@ -214,7 +247,7 @@
             // 
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.label15.Location = new System.Drawing.Point(950, 64);
+            this.label15.Location = new System.Drawing.Point(1171, 64);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(81, 20);
             this.label15.TabIndex = 34;
@@ -244,11 +277,11 @@
             // 
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.label12.Location = new System.Drawing.Point(950, 34);
+            this.label12.Location = new System.Drawing.Point(939, 62);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(38, 20);
+            this.label12.Size = new System.Drawing.Size(67, 20);
             this.label12.TabIndex = 31;
-            this.label12.Text = "Port:";
+            this.label12.Text = "Dst. Port:";
             // 
             // label11
             // 
@@ -313,9 +346,9 @@
             // buttonACLAddRule
             // 
             this.buttonACLAddRule.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.buttonACLAddRule.Location = new System.Drawing.Point(1194, 26);
+            this.buttonACLAddRule.Location = new System.Drawing.Point(1418, 62);
             this.buttonACLAddRule.Name = "buttonACLAddRule";
-            this.buttonACLAddRule.Size = new System.Drawing.Size(94, 69);
+            this.buttonACLAddRule.Size = new System.Drawing.Size(95, 45);
             this.buttonACLAddRule.TabIndex = 22;
             this.buttonACLAddRule.Text = "Add Rule";
             this.buttonACLAddRule.UseVisualStyleBackColor = true;
@@ -351,7 +384,7 @@
             // numericUpDownACLDstPort
             // 
             this.numericUpDownACLDstPort.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.numericUpDownACLDstPort.Location = new System.Drawing.Point(1037, 26);
+            this.numericUpDownACLDstPort.Location = new System.Drawing.Point(1012, 60);
             this.numericUpDownACLDstPort.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -411,7 +444,6 @@
             // groupBoxCableStatus
             // 
             this.groupBoxCableStatus.Controls.Add(this.label16);
-            this.groupBoxCableStatus.Controls.Add(this.buttonCableStatusSetSeconds);
             this.groupBoxCableStatus.Controls.Add(this.labeld2CableConnected);
             this.groupBoxCableStatus.Controls.Add(this.labelInterfaceCableConnected2);
             this.groupBoxCableStatus.Controls.Add(this.labelInterfaceCableConnected1);
@@ -434,17 +466,6 @@
             this.label16.TabIndex = 27;
             this.label16.Text = "No. seconds to check cable status:";
             this.label16.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // buttonCableStatusSetSeconds
-            // 
-            this.buttonCableStatusSetSeconds.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.buttonCableStatusSetSeconds.Location = new System.Drawing.Point(282, 109);
-            this.buttonCableStatusSetSeconds.Name = "buttonCableStatusSetSeconds";
-            this.buttonCableStatusSetSeconds.Size = new System.Drawing.Size(50, 29);
-            this.buttonCableStatusSetSeconds.TabIndex = 17;
-            this.buttonCableStatusSetSeconds.Text = "Set";
-            this.buttonCableStatusSetSeconds.UseVisualStyleBackColor = true;
-            this.buttonCableStatusSetSeconds.Click += new System.EventHandler(this.buttonCableStatusSetSeconds_Click);
             // 
             // labeld2CableConnected
             // 
@@ -492,10 +513,10 @@
             0,
             0});
             this.numericUpDownCableDetectionSeconds.Name = "numericUpDownCableDetectionSeconds";
-            this.numericUpDownCableDetectionSeconds.Size = new System.Drawing.Size(77, 27);
+            this.numericUpDownCableDetectionSeconds.Size = new System.Drawing.Size(122, 27);
             this.numericUpDownCableDetectionSeconds.TabIndex = 23;
             this.numericUpDownCableDetectionSeconds.Value = new decimal(new int[] {
-            1,
+            3,
             0,
             0,
             0});
@@ -942,9 +963,26 @@
             this.dataGridViewACL.AllowUserToDeleteRows = false;
             this.dataGridViewACL.AllowUserToOrderColumns = true;
             this.dataGridViewACL.AllowUserToResizeRows = false;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI Semibold", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewACL.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridViewACL.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewACL.DefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridViewACL.Location = new System.Drawing.Point(6, 26);
             this.dataGridViewACL.Name = "dataGridViewACL";
+            this.dataGridViewACL.ReadOnly = true;
             this.dataGridViewACL.RowHeadersWidth = 51;
             this.dataGridViewACL.RowTemplate.Height = 29;
             this.dataGridViewACL.Size = new System.Drawing.Size(1515, 258);
@@ -971,6 +1009,17 @@
             this.CableDetectionTimer.Interval = 800;
             this.CableDetectionTimer.Tick += new System.EventHandler(this.CableDetectionTimer_Tick);
             // 
+            // ACLTableUpdater
+            // 
+            this.ACLTableUpdater.Enabled = true;
+            this.ACLTableUpdater.Interval = 1500;
+            this.ACLTableUpdater.Tick += new System.EventHandler(this.ACLTableUpdater_Tick);
+            // 
+            // MACTableGUITimer
+            // 
+            this.MACTableGUITimer.Interval = 1000;
+            this.MACTableGUITimer.Tick += new System.EventHandler(this.MACTableGUITimer_Tick);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -988,6 +1037,7 @@
             this.groupBoxSwitchSettings.ResumeLayout(false);
             this.groupBoxACL.ResumeLayout(false);
             this.groupBoxACL.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownACLSrcPort)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownACLDstPort)).EndInit();
             this.groupBoxCableStatus.ResumeLayout(false);
             this.groupBoxCableStatus.PerformLayout();
@@ -1084,6 +1134,9 @@
         private Label labelInterfaceCableConnected2;
         private Label labeld2CableConnected;
         private Label label16;
-        private Button buttonCableStatusSetSeconds;
+        private Label label17;
+        public NumericUpDown numericUpDownACLSrcPort;
+        public System.Windows.Forms.Timer ACLTableUpdater;
+        public System.Windows.Forms.Timer MACTableGUITimer;
     }
 }

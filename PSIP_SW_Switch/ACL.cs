@@ -70,14 +70,19 @@ namespace PSIP_SW_Switch
             // GUIController.AclGUI.AddRule(new ACLRule(ACLRuleDirection.INBOUND, new PacketInfo()));
 
         }
-        public static void EnableACL()
+        public static void EnableProcessing()
         {
             Enabled = true;
         }
 
-        public static void DisableACL()
+        public static void DisableProcessing()
         {
             Enabled = false;
+        }
+
+        public static void RefreshGUI()
+        {
+            GUIController.AclGUI.Refresh();
         }
 
         public static void AddRule()
@@ -89,7 +94,15 @@ namespace PSIP_SW_Switch
             }
         }
 
-        public static bool IsAllowed<T>(T packet, ACLRuleDirection direction)
+        public static void DeleteAllRules()
+        {
+            Task.Run(() =>
+            {
+                GUIController.AclGUI.DeleteAllRules();
+            });
+        }
+
+        public static bool IsAllowed<T>(T packet, ACLRuleDirection direction, ILiveDevice device)
         {
             if (Enabled == false)
             {
@@ -98,18 +111,25 @@ namespace PSIP_SW_Switch
             }
 
             PacketInfo checkedPacket = getPacketInfo(packet);
+            
+            if(direction == ACLRuleDirection.INBOUND)
+                checkedPacket.InDevice = device;
+            else if(direction == ACLRuleDirection.OUTBOUND)
+                checkedPacket.OutDevice = device;
 
             foreach (var rule in AclRules)
             {
                 if (IsMatch(rule, checkedPacket, direction))
                 {
+                    rule.noMatches++;
+
                     if (rule.Allowance == ACLAllowance.ALLOW)
                     {
                         //SysLog.Log(SysLogSeverity.Informational, rule.ToString());
                         return true;
                     }
                     
-                    SysLog.Log(SysLogSeverity.Warning, rule.ToString());
+                    SysLog.Log(SysLogSeverity.Alert, rule.ToString());
                     return false;
                     
                 }
@@ -136,13 +156,17 @@ namespace PSIP_SW_Switch
                 {
                     return false;
                 }
-
-                var outDevice = checkedPacketInfo.OutDevice ?? rule.device;
-
-                if (rule.AclRuleDirection == ACLRuleDirection.OUTBOUND && rule.device != outDevice)
+                else
                 {
-                    return false;
+                    var outDevice = checkedPacketInfo.OutDevice ?? rule.device;
+
+                    if (rule.AclRuleDirection == ACLRuleDirection.OUTBOUND && rule.device != outDevice)
+                    {
+                        return false;
+                    }
                 }
+
+                
             }
             
             // Check if the rule matches the packet info
@@ -185,10 +209,10 @@ namespace PSIP_SW_Switch
                     return false;
                 }
 
-                //if (rule.packetInfo.SourcePort != 0 && rule.packetInfo.SourcePort != checkedPacketInfo.SourcePort)
-                //{
-                //    return false;
-                //}
+                if (rule.packetInfo.SourcePort != 0 && rule.packetInfo.SourcePort != checkedPacketInfo.SourcePort)
+                {
+                    return false;
+                }
 
                 if (rule.packetInfo.DestinationPort != 0 && rule.packetInfo.DestinationPort != checkedPacketInfo.DestinationPort)
                 {
@@ -219,7 +243,7 @@ namespace PSIP_SW_Switch
                 throw new InvalidDataException("Invalid packet type");
             }
 
-            Packet data = p.PayloadPacket;
+            Packet data = p;
             while (data != null)
             {
                 switch (data)
@@ -252,7 +276,7 @@ namespace PSIP_SW_Switch
                         int icmpCode = icmpPacket.HeaderData[0];
 
                         packetInfo.Protocol = Protocol.ICMP;
-                        if (Enum.IsDefined(typeof(IcmpV4Packet), icmpCode))
+                        if (Enum.IsDefined(typeof(ICMPType), icmpCode))
                             packetInfo.IcmpType = (ICMPType)icmpCode;
                         else
                             packetInfo.IcmpType = ICMPType.ANY;
@@ -278,9 +302,72 @@ namespace PSIP_SW_Switch
         public ACLAllowance Allowance { get; set; } = ACLAllowance.DENY;
         public ILiveDevice? device { get; set; } = null;
 
+        public long noMatches { get; set; } = 0;
 
-       //[Browsable(false)] // To hide packetinfo property from dataGridView
+
+       
+
+       [Browsable(false)] // To hide packetinfo property from dataGridView
         public PacketInfo packetInfo { get; set; }
+
+        [Browsable(true)]
+        public IPAddress SourceIpAddress
+        {
+            get { return packetInfo.SourceIpAddress; }
+            set { packetInfo.SourceIpAddress = value; }
+        }
+        
+
+        [Browsable(true)]
+        public IPAddress DestinationIpAddress
+        {
+            get { return packetInfo.DestinationIpAddress; }
+            set { packetInfo.DestinationIpAddress = value; }
+        }
+
+        [Browsable(true)]
+        public PhysicalAddress SourcePhysicalAddress
+        {
+            get { return packetInfo.SourcePhysicalAddress; }
+            set { packetInfo.SourcePhysicalAddress = value; }
+        }
+
+        [Browsable(true)]
+        public PhysicalAddress DestinationPhysicalAddress
+        {
+            get { return packetInfo.DestinationPhysicalAddress; }
+            set { packetInfo.DestinationPhysicalAddress = value; }
+        }
+
+
+        [Browsable(true)]
+        public ushort SourcePort
+        {
+            get { return packetInfo.SourcePort; }
+            set { packetInfo.SourcePort = value; }
+        }
+
+        [Browsable(true)]
+        public ushort DestinationPort
+        {
+            get { return packetInfo.DestinationPort; }
+            set { packetInfo.DestinationPort = value; }
+        }
+
+        [Browsable(true)]
+        public Protocol Protocol
+        {
+            get { return packetInfo.Protocol; }
+            set { packetInfo.Protocol = value; }
+        }
+
+        [Browsable(true)]
+        public ICMPType IcmpType
+        {
+            get { return packetInfo.IcmpType; }
+            set { packetInfo.IcmpType = value; }
+        }
+
 
         public ACLRule()
         {
@@ -313,6 +400,12 @@ namespace PSIP_SW_Switch
             string allowance = Allowance.ToString();
             string dev = (device == null) ? "ANY" : device.Description;
 
+
+            if (proto.Equals("ICMP"))
+            {
+                proto = proto + $" ({IcmpType})";
+            }
+
             return string.Format($"[{allowance}] | {AddressInfo} [Protocol {proto}] | [{direction}] on [{dev}]");
         }
     }
@@ -325,6 +418,7 @@ namespace PSIP_SW_Switch
         public PhysicalAddress SourcePhysicalAddress { get; set; } = PhysicalAddress.None;
         public PhysicalAddress DestinationPhysicalAddress { get; set; } = PhysicalAddress.None;
 
+       // [Browsable(false)]
         public ushort SourcePort { get; set; } = 0;
         public ushort DestinationPort { get; set; } = 0;
 
@@ -332,20 +426,23 @@ namespace PSIP_SW_Switch
 
         public ICMPType IcmpType { get; set; } = ICMPType.ANY;
 
+        [Browsable(false)]
         public ILiveDevice? InDevice { get; set; }
+        [Browsable(false)]
         public ILiveDevice? OutDevice { get; set; }
 
         public PacketInfo()
         {
 
         }
-        public PacketInfo(PhysicalAddress sourcePhysicalAddress, PhysicalAddress destinationPhysicalAddress, IPAddress sourceIpAddress, IPAddress destinationIpAddress, ushort destinationPort, Protocol protocol, ICMPType icmpType)
+        public PacketInfo(PhysicalAddress sourcePhysicalAddress, PhysicalAddress destinationPhysicalAddress, IPAddress sourceIpAddress, IPAddress destinationIpAddress, ushort sourcePort, ushort destinationPort, Protocol protocol, ICMPType icmpType)
         {
             SourceIpAddress = sourceIpAddress;
             DestinationIpAddress = destinationIpAddress;
             SourcePhysicalAddress = sourcePhysicalAddress;
             DestinationPhysicalAddress = destinationPhysicalAddress;
             DestinationPort = destinationPort;
+            SourcePort = sourcePort;
             Protocol = protocol;
             IcmpType = icmpType;
         }
@@ -358,9 +455,9 @@ namespace PSIP_SW_Switch
             string dstMAC = (DestinationPhysicalAddress.Equals(PhysicalAddress.None))
                 ? "ANY Dst. MAC"
                 : EndDeviceRecord.FormatMAC(DestinationPhysicalAddress);
-            string srcIp = (SourceIpAddress.Equals(IPAddress.Any)) ? "ANY Src. IP" : $"{SourceIpAddress}";
+            string srcIp = (SourceIpAddress.Equals(IPAddress.Any) || SourceIpAddress.Equals(IPAddress.None)) ? "ANY Src. IP" : $"{SourceIpAddress}";
             string port = (DestinationPort == 0) ? "ANY" : DestinationPort.ToString();
-            string dstIp = (SourceIpAddress.Equals(IPAddress.Any)) ? "ANY Dst. IP" : $"{DestinationIpAddress}";
+            string dstIp = (DestinationIpAddress.Equals(IPAddress.Any) || DestinationIpAddress.Equals(IPAddress.None)) ? "ANY Dst. IP" : $"{DestinationIpAddress}";
 
 
             return string.Format(

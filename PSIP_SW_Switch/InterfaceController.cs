@@ -5,6 +5,7 @@ using System.Data;
 using System.Net.NetworkInformation;
 using PacketDotNet;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography.Xml;
 
 namespace PSIP_SW_Switch
 {
@@ -18,11 +19,13 @@ namespace PSIP_SW_Switch
         public static ILiveDevice? d1;
         public static ILiveDevice? d2;
 
-        public static bool d1CableDisconnected = false;
-        public static bool d2CableDisconnected = false;
+        public static bool d1CableDisconnected = true;
+        public static bool d2CableDisconnected = true;
 
-        public static DateTime d1LastPacketArrival;
-        public static DateTime d2LastPacketArrival;
+        public static DateTime d1LastPacketArrival = DateTime.UtcNow;
+        public static DateTime d2LastPacketArrival = DateTime.UtcNow;
+
+        public static object PacketArrivalLock = new ();
 
         static CaptureDeviceList _devices = CaptureDeviceList.Instance;
         private static List<ILiveDevice>? _openedDevices;
@@ -52,8 +55,6 @@ namespace PSIP_SW_Switch
         {
             gui?.comboBoxInterfaceList1.Items.Clear();
             gui?.comboBoxInterfaceList2.Items.Clear();
-            // TODO clear combobox text after refresh interface
-            // TODO sort them !
 
             _devices.Refresh();
 
@@ -138,14 +139,16 @@ namespace PSIP_SW_Switch
                 ILiveDevice device = (ILiveDevice)sender;
 
                 if(device == d1)
-                    d1LastPacketArrival = DateTime.Now;
+                    lock(PacketArrivalLock)
+                        d1LastPacketArrival = DateTime.UtcNow;
                 else if(device == d2)
-                    d2LastPacketArrival = DateTime.Now;
+                    lock(PacketArrivalLock)
+                        d2LastPacketArrival = DateTime.UtcNow;
 
 
                 RawCapture cap = e.GetPacket();
 
-                if (ACL.Enabled  && !ACL.IsAllowed(cap, ACLRuleDirection.INBOUND)) // ACL Enabled and if not Allowed
+                if (ACL.Enabled  && !ACL.IsAllowed(cap, ACLRuleDirection.INBOUND, device)) // ACL Enabled and if not Allowed
                 {
                     return;
                 }
@@ -157,7 +160,9 @@ namespace PSIP_SW_Switch
                     CapturedQueue.Enqueue(p);
                 }
                 Statistics.UpdateStatistics((device == d1) ? 1 : 2, p, true);
-                MACAddressTable.AddRecord(p); // TODO Collection modified
+
+                MACAddressTable.AddRecord(p);
+                
             }
 
             catch (Exception ex)
@@ -175,7 +180,9 @@ namespace PSIP_SW_Switch
             {
                 try
                 {
-                    dev.Open(DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
+                    dev.Open(DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous); // DeviceModes.NoCaptureRemote);
+                    // TODO hash tabulka ak sa zacykli komunikaica. nepreposielma to co som uz spracovala lebo nezachytavam uz to co som poslal resp. zachytil.
+                    // TODO alebo mode iba IN.
                 }
                 catch
                 {
@@ -212,11 +219,32 @@ namespace PSIP_SW_Switch
             }
         }
 
-        private static void StartNetworkInterfaceCapture(ILiveDevice device)
+        public static void CloseNetworkInterface(ILiveDevice dev)
+        {
+            dev.Close();
+        }
+
+        public static void OpenNetworkInterface(ILiveDevice dev)
+        {
+            try
+            {
+                dev.Open(DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
+                //dev.Open(DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
+            }
+            catch
+            {
+                throw new IOException($"Unable to open main interface {dev.Description}");
+            }
+        }
+
+        public static void StartNetworkInterfaceCapture(ILiveDevice device)
         {
             //device.Open( DeviceModes.MaxResponsiveness | DeviceModes.NoCaptureLocal | DeviceModes.Promiscuous);
             device.OnPacketArrival += device_OnPacketArrival;
             device.StartCapture();
+
+            if(!Started)
+                device.Close();
         }
 
 
@@ -230,13 +258,13 @@ namespace PSIP_SW_Switch
             foreach (var dev in nonFunctioningDevices)
             {
                 dev.Close();
-                nonFunctioningDevices.Remove(dev);
+                _openedDevices.Remove(dev);
             }
         }
         
         private static void Thread_NetworkInterfaceSender(ref Queue<PacketForQueue> PacketQueue, ref object QueueLock, ref bool BackgroundThreadStop)
         {
-            Console.WriteLine("Started");
+            //Console.WriteLine("Started");
             while (!BackgroundThreadStop)
             {
                 Queue<PacketForQueue> processQueue = null;
@@ -256,25 +284,44 @@ namespace PSIP_SW_Switch
                     {
                         try
                         {
-                            if (ACL.Enabled && !ACL.IsAllowed(qPacket, ACLRuleDirection.OUTBOUND))
-                            {
-                                continue;
-                            }
-
-
                             ILiveDevice senderDevice = (qPacket.device == d1) ? d2 : ((qPacket.device == d2) ? d1 : null);
+
+
                             if (senderDevice == null)
                             {
                                 throw new Exception("Invalid device");
                             }
+                            
+                            if((senderDevice == d1 && d1CableDisconnected) || (senderDevice == d2 && d2CableDisconnected))
+                                    break; // TODO Break alebo continue?
+                            
 
-                            if (MACAddressTable.IsInTable(qPacket))
+                            if (ACL.Enabled && !ACL.IsAllowed(qPacket, ACLRuleDirection.OUTBOUND, senderDevice))
                             {
+                                continue;
+                            }
+
+                            bool inMacTable = false;
+
+
+
+                            lock (MACAddressTable.MacAddressTableLock)
+                            {
+                                inMacTable = MACAddressTable.IsInTable(qPacket, addRecord: false);
+                            }
+
+                            if (inMacTable)
+                            {
+                                //Console.WriteLine(
+                                //    $"[MAC] {EndDeviceRecord.FormatMAC(qPacket.ethPacket.DestinationHardwareAddress)} in table, sending by port {deviceMap[senderDevice]}");
                                 senderDevice.SendPacket(qPacket.ethPacket);
                             }
                             else
                             {
-                                foreach (var dev in _openedDevices.ToList())
+                                //Console.WriteLine($"[MAC] {EndDeviceRecord.FormatMAC(qPacket.ethPacket.DestinationHardwareAddress)} NOT IN TABLE, sending by ALL");
+
+                                List<ILiveDevice> nonFunctioningDevices = new();
+                                foreach (var dev in _openedDevices)
                                 {
                                     if (qPacket.device == dev)
                                         continue;
@@ -285,19 +332,21 @@ namespace PSIP_SW_Switch
                                     }
                                     catch
                                     {
-                                        dev.Close();
-                                        _openedDevices.Remove(dev);
+                                        if(dev != d1 || dev != d2)
+                                            nonFunctioningDevices.Add(dev);
                                     }
                                 }
-                               
+
+                                RemoveNonFunctioningDevices(nonFunctioningDevices);
                             }
 
-                            Statistics.UpdateStatistics( (senderDevice == d1) ? 1 : 2 , qPacket, false);
+                            Statistics.UpdateStatistics(deviceMap[senderDevice], qPacket, false);
 
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show(ex.Message, "General Packet Send Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            continue;
+                            // MessageBox.Show(ex.Message, "General Packet Send Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
@@ -325,91 +374,8 @@ namespace PSIP_SW_Switch
         public PacketForQueue(ILiveDevice device, SysLogPacket packet)
         {
             this.device = device;
-            this.ethPacket = (EthernetPacket)packet.GetPacket(); // TODO check if Syslog wont make problems here
+            this.ethPacket = (EthernetPacket)packet.GetPacket();
         }
 
-    }
-
-    public class EndDeviceRecord : INotifyPropertyChanged
-    {
-        private PhysicalAddress _macAddress;
-        public PhysicalAddress MacAddress
-        {
-            get { return _macAddress; }
-            set
-            {
-                _macAddress = value;
-                OnPropertyChanged("MacAddress");
-            }
-        }
-
-        private int _port;
-        public int Port
-        {
-            get { return _port; }
-            set
-            {
-                _port = value;
-                OnPropertyChanged("Port");
-            }
-        }
-
-        private int _timer;
-        public int Timer
-        {
-            get { return _timer; }
-            set
-            {
-                _timer = value;
-                OnPropertyChanged("Timer");
-            }
-        }
-
-        public EndDeviceRecord(PacketForQueue packet, int port, int timer)
-        {
-            MacAddress = packet.ethPacket.SourceHardwareAddress;
-            Port = port;
-            Timer = timer;
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public static string FormatMAC<T>(T mac)
-        {
-            string macAddress;
-
-            if (mac is PhysicalAddress m)
-            {
-                macAddress = m.ToString();
-            } else if (mac is string s)
-            {
-                if (s.Length != 12)
-                {
-                    throw new InvalidDataException("Invalid type of MAC Address");
-                }
-                macAddress = s;
-            }
-            else
-            {
-                throw new InvalidDataException("Invalid type of MAC Address");
-            }
-
-            macAddress = macAddress.ToUpper();
-            string formattedMacAddress = "";
-            for (int i = 0; i < macAddress.Length; i += 2)
-            {
-                formattedMacAddress += macAddress.Substring(i, 2);
-                if (i < macAddress.Length - 2)
-                {
-                    formattedMacAddress += ":";
-                }
-            }
-            return formattedMacAddress;
-        }
     }
 }
